@@ -86,6 +86,7 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    //juce::dsp::ProcessSpec spec;
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     juce::ignoreUnused (sampleRate, samplesPerBlock);
@@ -179,6 +180,32 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
     // whose contents will have been created by the getStateInformation() call.
     juce::ignoreUnused (data, sizeInBytes);
 }
+
+juce::AudioProcessorValueTreeState::ParameterLayout
+    AudioPluginAudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainDensity","Grain Density",juce::NormalisableRange<float>(1.f,100.f,0.1f,0.5f),10.f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainDuration","Grain Duration",juce::NormalisableRange<float>(10.f,500.f,0.1f,0.5f),10.f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("playBackSpeed","PlayBack Speed",juce::NormalisableRange<float>(0.1f,4.f,0.01f,0.5f),1.f));
+
+    //pre-grain envelope
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainAttack","Grain Attack",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainDecay","Grain Decay",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.02f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainSustain","Grain Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
+
+    //global-output envelope
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalAttack","Global Attack",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.01f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalDecay","Global Decay",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.1f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalSustain","Global Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalRelease","Global Release",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.2f));
+
+    return layout;
+}
+
 
 //==============================================================================
 // This creates new instances of the plugin..
