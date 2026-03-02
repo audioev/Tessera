@@ -60,6 +60,31 @@ private:
     juce::String suffix;
 };
 //==============================================================================
+
+struct WaveFormComponent : juce::Component,
+                            juce::Timer
+{
+    WaveFormComponent(AudioPluginAudioProcessor&);
+    ~WaveFormComponent();
+
+    void timerCallback() override;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+private:
+    AudioPluginAudioProcessor& processorRef;
+
+    static constexpr int MaxSamples = 48000;
+    std::array<float, MaxSamples> sampleBuf;
+    int writeHead = 0;
+    int totalSamplesCollected = 0;
+
+    juce::Rectangle<int> getRenderArea() const;
+    juce::Rectangle<int> getAnalysisArea() const;
+};
+
+//==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
 {
 public:
@@ -92,6 +117,8 @@ private:
     //Attachment creates a listener to attach to the param objects
     using Attachment = APVTS::SliderAttachment;
 
+    WaveFormComponent waveFormComponent;
+
     Attachment grainDensitySliderAttachment,
     grainDurationSliderAttachment,
     playBackSpeedSliderAttachment,
@@ -102,6 +129,10 @@ private:
     globalDecaySliderAttachment,
     globalSustainSliderAttachment,
     globalReleaseSliderAttachment;
+
+    juce::Rectangle<int> grainEnvBox, globalEnvBox, waveFormBox;
+    juce::TextButton powerButton;
+    juce::ButtonParameterAttachment powerButtonAttachment;
 
     //allows for ease of access to components
     std::vector<juce::Component*> getComps();

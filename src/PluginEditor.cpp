@@ -169,31 +169,138 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 
 //============================================================================================
 
+WaveFormComponent::WaveFormComponent(AudioPluginAudioProcessor& p ) : processorRef(p)
+{
+        startTimerHz(30);
+}
 
+WaveFormComponent::~WaveFormComponent()
+{
+    stopTimer();
+}
+
+juce::Rectangle<int> WaveFormComponent::getRenderArea() const
+{
+    auto bounds = getLocalBounds();
+    bounds.removeFromTop(4);
+    bounds.removeFromBottom(4);
+    bounds.removeFromLeft(4);
+    bounds.removeFromRight(4);
+
+    return bounds;
+}
+
+juce::Rectangle<int> WaveFormComponent::getAnalysisArea() const
+{
+    auto bounds = getRenderArea();
+
+    bounds.removeFromTop(4);
+    bounds.removeFromBottom(4);
+
+    return bounds;
+}
+
+void WaveFormComponent::timerCallback()
+{
+    juce::AudioBuffer<float> tempBuf;
+    while (processorRef.leftChannelFifo.getNumCompleteBuffersAvailable() > 0)
+    {
+        if (processorRef.leftChannelFifo.getAudioBuffer(tempBuf))
+        {
+            auto* data = tempBuf.getReadPointer(0);
+            for (auto i = 0; i < tempBuf.getNumSamples(); ++i)
+            {
+                sampleBuf[writeHead % MaxSamples] = data[i];
+                ++writeHead;
+                totalSamplesCollected = juce::jmin(totalSamplesCollected + 1, MaxSamples);
+            }
+        }
+    }
+    repaint();
+}
+
+void WaveFormComponent:: paint (juce::Graphics& g)
+{
+    g.fillAll(juce::Colours::black);
+
+    g.setColour(juce::Colours::white);
+    g.drawRect(getRenderArea());
+
+    auto analysisArea = getAnalysisArea();
+    const int W = analysisArea.getWidth();
+    const float midY = analysisArea.getCentreY();
+    const float halfH = analysisArea.getHeight() * 0.5f;
+
+    if (totalSamplesCollected == 0) return;
+
+    juce::Path waveform;
+    for (int p = 0; p < W ; ++p)
+    {
+        int sampleStart = static_cast<int>(static_cast<float>(p) / W * totalSamplesCollected);
+        int sampleEnd = juce::jmax(static_cast<int>(static_cast<float>(p + 1) / W * totalSamplesCollected) , sampleStart + 1);
+
+        float minVal = 0.f, maxVal = 0.f;
+
+        for (int sample = sampleStart; sample < sampleEnd; ++sample)
+        {
+            int index = (writeHead - totalSamplesCollected + sample + MaxSamples) % MaxSamples;
+            float indivSample = sampleBuf[index];
+            minVal = juce::jmin(minVal, indivSample);
+            maxVal = juce::jmax(maxVal, indivSample);
+        }
+
+        float yTop = midY - (maxVal * halfH);
+        float yBottom = midY - (minVal * halfH);
+
+        if (p == 0)
+        {
+            waveform.startNewSubPath(static_cast<float>(analysisArea.getX() + p), yTop);
+            waveform.startNewSubPath(static_cast<float>(analysisArea.getX() + p), yBottom);
+        }else
+        {
+            waveform.lineTo(static_cast<float>(analysisArea.getX() + p), yTop);
+            waveform.lineTo(static_cast<float>(analysisArea.getX() + p), yBottom);
+        }
+
+    }
+
+    g.setColour(juce::Colours::rebeccapurple);
+    g.strokePath(waveform, juce::PathStrokeType(1.5f));
+}
+
+void WaveFormComponent:: resized()
+{
+    repaint();
+}
+
+//============================================================================================
 
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p),
-grainDensitySlider(*processorRef.apvts.getParameter("Grain Density"),"Grains"),
-grainDurationSlider(*processorRef.apvts.getParameter("Grain Duration"),"Ms"),
-playBackSpeedSlider(*processorRef.apvts.getParameter("Play-Back Speed"),"x"),
-grainAttackSlider(*processorRef.apvts.getParameter("Grain-Attack"),"Ms"),
-grainDecaySlider(*processorRef.apvts.getParameter("Grain-Decay"),"Ms"),
-grainSustainSlider(*processorRef.apvts.getParameter("Grain-Sustain"),"Ms"),
-globalAttackSlider(*processorRef.apvts.getParameter("Global-Attack"),"Ms"),
-globalDecaySlider(*processorRef.apvts.getParameter("Global-Decay"),"Ms"),
-globalSustainSlider(*processorRef.apvts.getParameter("Global-Sustain"),"Ms"),
-globalReleaseSlider(*processorRef.apvts.getParameter("Global-Release"),"Ms"),
+grainDensitySlider(*processorRef.apvts.getParameter("grainDensity"),"Grains"),
+grainDurationSlider(*processorRef.apvts.getParameter("grainDuration"),"Ms"),
+playBackSpeedSlider(*processorRef.apvts.getParameter("playBackSpeed"),"x"),
+grainAttackSlider(*processorRef.apvts.getParameter("grainAttack"),"Ms"),
+grainDecaySlider(*processorRef.apvts.getParameter("grainDecay"),"Ms"),
+grainSustainSlider(*processorRef.apvts.getParameter("grainSustain"),"Ms"),
+globalAttackSlider(*processorRef.apvts.getParameter("globalAttack"),"Ms"),
+globalDecaySlider(*processorRef.apvts.getParameter("globalDecay"),"Ms"),
+globalSustainSlider(*processorRef.apvts.getParameter("globalSustain"),"Ms"),
+globalReleaseSlider(*processorRef.apvts.getParameter("globalRelease"),"Ms"),
 
-grainDensitySliderAttachment(processorRef.apvts,"Grain Density",grainDensitySlider),
-grainDurationSliderAttachment(processorRef.apvts,"Grain Duration",grainDurationSlider),
-playBackSpeedSliderAttachment(processorRef.apvts,"Play-Back Speed",playBackSpeedSlider),
-grainAttackSliderAttachment(processorRef.apvts,"Grain-Attack",grainAttackSlider),
-grainDecaySliderAttachment(processorRef.apvts,"Grain-Decay",grainDecaySlider),
-grainSustainSliderAttachment(processorRef.apvts,"Grain-Sustain",grainSustainSlider),
-globalAttackSliderAttachment(processorRef.apvts, "Global-Attack",globalAttackSlider),
-globalDecaySliderAttachment(processorRef.apvts, "Global-Decay",globalDecaySlider),
-globalReleaseSliderAttachment(processorRef.apvts, "Global-Release",globalReleaseSlider),
-globalSustainSliderAttachment(processorRef.apvts,"Global-Sustain",globalSustainSlider)
+waveFormComponent(processorRef),
+
+grainDensitySliderAttachment(processorRef.apvts,"grainDensity",grainDensitySlider),
+grainDurationSliderAttachment(processorRef.apvts,"grainDuration",grainDurationSlider),
+playBackSpeedSliderAttachment(processorRef.apvts,"playBackSpeed",playBackSpeedSlider),
+grainAttackSliderAttachment(processorRef.apvts,"grainAttack",grainAttackSlider),
+grainDecaySliderAttachment(processorRef.apvts,"grainDecay",grainDecaySlider),
+grainSustainSliderAttachment(processorRef.apvts,"grainSustain",grainSustainSlider),
+globalAttackSliderAttachment(processorRef.apvts, "globalAttack",globalAttackSlider),
+globalDecaySliderAttachment(processorRef.apvts, "globalDecay",globalDecaySlider),
+globalReleaseSliderAttachment(processorRef.apvts, "globalRelease",globalReleaseSlider),
+globalSustainSliderAttachment(processorRef.apvts,"globalSustain",globalSustainSlider),
+powerButtonAttachment(*processorRef.apvts.getParameter("bypass"),powerButton)
 {
     grainDensitySlider.labels.add({0.f,"1"});
     grainDensitySlider.labels.add({1.f,"256"});
@@ -225,15 +332,26 @@ globalSustainSliderAttachment(processorRef.apvts,"Global-Sustain",globalSustainS
     globalSustainSlider.labels.add({0.f,"5ms"});
     globalSustainSlider.labels.add({1.f,"500ms"});
 
+    powerButton.setButtonText("Bypass");
+    powerButton.setClickingTogglesState(true);
+    powerButton.onClick = [this]()
+    {
+        bool bypassed = powerButton.getToggleState();
+        for (auto* comp : getComps() )
+            comp->setEnabled(!bypassed);
+        repaint();
+    };
+
     for (auto* comp : getComps() )
     {
         addAndMakeVisible(comp);
     }
 
+    addAndMakeVisible(powerButton);
     const auto& params = processorRef.getParameters();
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (800, 500);
+    setSize (1000, 600);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -244,7 +362,29 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    bool bypassed = powerButton.getToggleState();
+
+    g.fillAll(juce::Colours::black);
+    //bypass interactivity
+    g.setColour( bypassed ? juce::Colours::grey : juce::Colours::white);
+    // bordered boxes
+    g.drawRect(grainEnvBox, 1);
+    g.drawRect(globalEnvBox, 1);
+    g.drawRect(waveFormBox, 1);
+
+    // section labels
+    g.setFont(12.f);
+    g.drawFittedText("Grain Parameters",
+        10, 245, 180, 20,
+        juce::Justification::centred, 1);
+    g.drawFittedText("Grain ADR",
+        grainEnvBox.getX(), grainEnvBox.getY() - 20,
+        grainEnvBox.getWidth(), 20,
+        juce::Justification::centred, 1);
+    g.drawFittedText("Global ADSR",
+        globalEnvBox.getX(), globalEnvBox.getY() - 20,
+        globalEnvBox.getWidth(), 20,
+        juce::Justification::centred, 1);
 
 }
 
@@ -253,27 +393,54 @@ void AudioPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 
-    auto bounds = getLocalBounds();
-    float hRatio = 25.f/100.f;
-    //auto responseArea = bounds.removeFromTop(bounds.getHeight() *0.33);
+    //auto bounds = getLocalBounds().reduced (10);
 
-    bounds.removeFromTop(5);
+    int bottomY = 260;
+    //int bottomH = getHeight() - bottomY - 10;
 
-    auto grainParamArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
-    auto grainEnvelopeParamArea = bounds.removeFromRight(bounds.getWidth() * 0.5);
+    int grainParamX = 10;
+    int knobLargeSize = 100;
+    int knobSmallSize = 80;
 
-    grainDensitySlider.setBounds(grainParamArea.removeFromTop(bounds.getHeight() * 0.33));
-    grainDurationSlider.setBounds(grainParamArea.removeFromTop(bounds.getHeight() * 0.66));
-    playBackSpeedSlider.setBounds(grainParamArea);
+    //bypass button
+    powerButton.setBounds(10,10,50,50);
 
-    grainAttackSlider.setBounds(grainParamArea.removeFromTop(bounds.getHeight() * 0.33));
-    grainDecaySlider.setBounds(grainParamArea.removeFromTop(bounds.getHeight() * 0.66));
-    grainSustainSlider.setBounds(grainParamArea);
+    waveFormBox = juce::Rectangle<int>(10,70,980,170);
+    waveFormComponent.setBounds(waveFormBox);
 
-    globalAttackSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.33));
-    globalDecaySlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.5));
-    globalSustainSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.66));
-    globalReleaseSlider.setBounds(bounds);
+    //granular parameters area
+    grainDensitySlider.setBounds(grainParamX , bottomY + 20, knobLargeSize, knobLargeSize);
+    grainDurationSlider.setBounds(grainParamX, bottomY + 140, knobSmallSize, knobSmallSize);
+    playBackSpeedSlider.setBounds(grainParamX + knobSmallSize + 10 , bottomY + 140, knobSmallSize, knobSmallSize);
+    //grain envelope area
+    int grainEnvX = 260;
+    int grainEnvW = 340;
+    int grainEnvH = 160;
+    grainEnvBox = juce::Rectangle<int>(grainEnvX, bottomY +30,grainEnvW,grainEnvH);
+
+    int grainKnobSize = 90;
+    int grainKnobY = grainEnvBox.getCentreY() - grainKnobSize / 2;
+    int grainSpacing = (grainEnvW - grainKnobSize * 3) / 4;
+
+    grainAttackSlider.setBounds(grainEnvBox.getX() + grainSpacing, grainKnobY , grainKnobSize, grainKnobSize);
+    grainDecaySlider.setBounds(grainEnvBox.getX() + grainSpacing * 2 + grainKnobSize, grainKnobY, grainKnobSize, grainKnobSize);
+    grainSustainSlider.setBounds(grainEnvBox.getX() + grainSpacing * 3 + grainKnobSize * 2, grainKnobY, grainKnobSize, grainKnobSize);
+
+    //global envelope area
+    int globalEnvX = 630;
+    int globalEnvW = 260;
+    int globalEnvH = 200;
+    globalEnvBox = juce::Rectangle<int>(globalEnvX,bottomY + 10,globalEnvW,globalEnvH);
+
+    int globalKnobSize = 90;
+    int globalPadX = (globalEnvW - globalKnobSize * 2) / 3;
+    int globalPadY = (globalEnvH - globalKnobSize * 2) / 3;
+
+    globalAttackSlider.setBounds(globalEnvBox.getX() + globalPadX, globalEnvBox.getY() + globalPadY, globalKnobSize, globalKnobSize);
+    globalDecaySlider.setBounds(globalEnvBox.getX() + globalPadX * 2 + globalKnobSize, globalEnvBox.getY() + globalPadY, globalKnobSize, globalKnobSize);
+    globalSustainSlider.setBounds(globalEnvBox.getX() + globalPadX, globalEnvBox.getY() + globalPadY * 2 + globalKnobSize, globalKnobSize, globalKnobSize);
+    globalReleaseSlider.setBounds(globalEnvBox.getX() + globalPadX * 2 + globalKnobSize, globalEnvBox.getY() + globalPadY * 2 + globalKnobSize, globalKnobSize, globalKnobSize);
+
 }
 
 std::vector<juce::Component*> AudioPluginAudioProcessorEditor::getComps()
@@ -288,6 +455,7 @@ std::vector<juce::Component*> AudioPluginAudioProcessorEditor::getComps()
         &globalAttackSlider,
         &globalDecaySlider,
         &globalSustainSlider,
-        &globalReleaseSlider
+        &globalReleaseSlider,
+        &waveFormComponent
     };
 }

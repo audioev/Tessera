@@ -89,7 +89,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     //juce::dsp::ProcessSpec spec;
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    leftChannelFifo.prepare(samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -128,6 +128,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
+
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
@@ -152,6 +153,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         juce::ignoreUnused (channelData);
         // ..do something to the data...
     }
+
+    leftChannelFifo.update(buffer);
 }
 
 //==============================================================================
@@ -186,22 +189,24 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainDensity","Grain Density",juce::NormalisableRange<float>(1.f,100.f,0.1f,0.5f),10.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDensity",1),"Grain Density",juce::NormalisableRange<float>(1.f,100.f,0.1f,0.5f),10.f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainDuration","Grain Duration",juce::NormalisableRange<float>(10.f,500.f,0.1f,0.5f),10.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(10.f,500.f,0.1f,0.5f),10.f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("playBackSpeed","PlayBack Speed",juce::NormalisableRange<float>(0.1f,4.f,0.01f,0.5f),1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.1f,4.f,0.01f,0.5f),1.f));
 
     //pre-grain envelope
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainAttack","Grain Attack",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainDecay","Grain Decay",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.02f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("grainSustain","Grain Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainAttack",1),"Grain Attack",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDecay",1),"Grain Decay",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.02f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainSustain",1),"Grain Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
 
     //global-output envelope
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalAttack","Global Attack",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.01f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalDecay","Global Decay",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.1f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalSustain","Global Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.2f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> ("globalRelease","Global Release",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalAttack",1),"Global Attack",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.01f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalDecay",1),"Global Decay",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.1f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalSustain",1),"Global Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalRelease",1),"Global Release",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.2f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("bypass",1),"Bypass",false));
 
     return layout;
 }
