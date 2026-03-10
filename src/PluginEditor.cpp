@@ -138,7 +138,7 @@ juce::String RotarySliderWithLabels::getDisplayString() const
         return choiceParam->getCurrentChoiceName();
 
     juce::String str;
-    bool addK = false;
+    //bool addK = false;
 
     if( auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
     {
@@ -146,9 +146,9 @@ juce::String RotarySliderWithLabels::getDisplayString() const
         if( val > 999.f)
         {
             val /= 1000.f;
-            addK = true;
+            //addK = true;
         }
-        str = juce::String(val, (addK ? 2 : 0));
+        str = juce::String(val);
     }
     else
     {
@@ -158,9 +158,6 @@ juce::String RotarySliderWithLabels::getDisplayString() const
     if( suffix.isNotEmpty() )
     {
         str << " ";
-        if( addK)
-            str << "k";
-
         str << suffix;
     }
 
@@ -226,9 +223,9 @@ void WaveFormComponent:: paint (juce::Graphics& g)
     g.setColour(juce::Colours::white);
     g.drawRect(getRenderArea());
 
-    auto analysisArea = getAnalysisArea();
+    const auto analysisArea = getAnalysisArea();
     const int W = analysisArea.getWidth();
-    const float midY = analysisArea.getCentreY();
+    const int midY = analysisArea.getCentreY();
     const float halfH = analysisArea.getHeight() * 0.5f;
 
     if (totalSamplesCollected == 0) return;
