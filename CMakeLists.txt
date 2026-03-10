@@ -67,7 +67,18 @@ juce_add_plugin("${PROJECT_NAME}"
 
 add_compile_definitions(JUCE_PROJECT_NAME="${PROJECT_NAME}")
 
-add_library(SharedCode INTERFACE)
+add_library(SharedCode INTERFACE
+        src/GranularEngine/Grain.cpp
+        src/GranularEngine/Grain.h
+        src/GranularEngine/GrainEnvelope.cpp
+        src/GranularEngine/GrainEnvelope.h
+        src/GranularEngine/EnvelopeType.h
+        src/GranularEngine/Engine.cpp
+        src/GranularEngine/Engine.h
+        src/GranularEngine/Scheduler.cpp
+        src/GranularEngine/Scheduler.h
+        src/GranularEngine/GrainPool.cpp
+        src/GranularEngine/GrainPool.h)
 
 target_compile_features(SharedCode INTERFACE cxx_std_20)
 
