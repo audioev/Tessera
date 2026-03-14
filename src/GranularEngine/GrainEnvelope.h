@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_dsp/juce_dsp.h>
+
+#include <cmath>
 #include "EnvelopeType.h"
 
 class GrainEnvelope
@@ -13,17 +13,17 @@ class GrainEnvelope
     GrainEnvelope();
     ~GrainEnvelope();
 
-    void configure(EnvelopeType env,int grainSamples);
+    void configure(EnvelopeType env,int totalSamples);
+    float calculate(float phase);
 
+private:
     EnvelopeType type;
     int totalSamples;
     int currentSample;
 
-    float getHannEnvelope(float sample);
-    float getGaussianEnvelope(float sample);
-    float getTrapezoidEnvelope(float sample);
-private:
-
+    float getHannEnvelope(float samplePhase);
+    float getGaussianEnvelope(float samplePhase);
+    float getTrapezoidEnvelope(float samplePhase);
 
 };
 

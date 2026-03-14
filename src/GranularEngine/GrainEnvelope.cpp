@@ -11,7 +11,16 @@ GrainEnvelope::GrainEnvelope()
 
 GrainEnvelope::~GrainEnvelope(){}
 
-void configure(EnvelopeType type,float sample)
+void GrainEnvelope::configure(EnvelopeType type,int totalSamples)
 {
+    this->type= type;
+    this->totalSamples;
+}
 
+float GrainEnvelope::getHannEnvelope(float samplePhase)
+{
+    float HannReturnAmplitude;
+
+    HannReturnAmplitude = 2.f * M_PI * samplePhase;
+    return HannReturnAmplitude;
 }
