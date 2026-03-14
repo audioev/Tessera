@@ -78,7 +78,8 @@ add_library(SharedCode INTERFACE
         src/GranularEngine/Scheduler.cpp
         src/GranularEngine/Scheduler.h
         src/GranularEngine/GrainPool.cpp
-        src/GranularEngine/GrainPool.h)
+        src/GranularEngine/GrainPool.h
+        src/GranularEngine/CircularBuffer.h)
 
 target_compile_features(SharedCode INTERFACE cxx_std_20)
 
