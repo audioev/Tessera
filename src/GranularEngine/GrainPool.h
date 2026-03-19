@@ -3,10 +3,20 @@
 //
 
 #pragma once
-
+#include "Grain.h"
 
 class GrainPool
 {
+    public:
+    GrainPool();
+    ~GrainPool();
+
+    void prepare();
+    Grain* getInactiveGrain();
+    void returnGrain(Grain* grain);
+
+private:
+    std::array<Grain, 128> grains;
 };
 
 
