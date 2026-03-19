@@ -15,9 +15,11 @@ public:
     Grain();
     ~Grain();
 
-    void configure(int duration, int startSample, int endSample , float pitch, float amplitude, GrainEnvelope envelope);
-    void getNextSample(float *sample);
-    bool  isFinished();
+    void configure(int duration, int startSample, int sample , float pitch, float amplitude,int totalSamples ,EnvelopeType type);
+    void setActive(bool status);
+    bool getActive();
+    float getNextSample( const float *sample);
+    bool isFinished();
     void reset();
 
 private:
@@ -27,6 +29,7 @@ private:
     float pitch;
     float amplitude;
     bool isActive;
+    int totalSamples;
 
     GrainEnvelope envelope;
 };
