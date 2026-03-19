@@ -5,8 +5,6 @@
 #pragma once
 #include <juce_audio_basics/juce_audio_basics.h>
 
-using namespace juce;
-
 class CircularBuffer
 {
     public:
@@ -22,7 +20,7 @@ class CircularBuffer
         buffer.clear();
     }
 
-    void write(AudioBuffer<float>& input)
+    void write(juce::AudioBuffer<float>& input)
     {
         for (int sample = 0; sample < input.getNumSamples(); sample++)
         {
@@ -34,12 +32,12 @@ class CircularBuffer
         }
     }
 
-    float read(int channel, int startSample, int numSamples, int currentSample)
+    const float* read(int channel, int startSample, int currentSample)
     {
-        return buffer.getSample(channel, (startSample + currentSample) % numSamples);
+        return buffer.getReadPointer(channel, (startSample + currentSample) % buffer.getNumSamples());
     }
 
     private:
     int writeHead = 0;
-    AudioBuffer<float> buffer;
+    juce::AudioBuffer<float> buffer;
 };
