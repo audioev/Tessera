@@ -18,9 +18,6 @@ struct CustomLookAndFeel : juce::LookAndFeel_V4
                                 float rotaryEndAngle,
                                 juce::Slider& ) override;
 
-    // void drawButton (juce::Graphics& g,
-    //                         int x, int y , int w, int h,
-    //                         float )
 };
 
 //=============================================================================

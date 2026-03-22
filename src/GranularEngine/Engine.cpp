@@ -35,20 +35,29 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, const GranularSettings
     for (auto& grain : grainPool)
     {
         if (!grain.getActive()) continue;
-        for (auto channels=0 ; channels<numChannels ; channels++)
+        for (auto samples = 0 ; samples < samplesPerBlock; samples++)
         {
-            for (auto samples = 0 ; samples < samplesPerBlock; samples++)
+            const float* readPntr = circularBuffer.read(0,grain.getStartSample(),grain.getCurrentSample());
+            std::cout << "startsample"<<grain.getStartSample() << std::endl;
+            std::cout << "currentsample"<<grain.getCurrentSample() << std::endl;
+            std::cout << "totalSmaples"<<grain.getTotalSamples() << std::endl;
+            float grainNxtSample = grain.getNextSample(readPntr);
+            //std::cout << "in channel loop"<< std::endl;
+            for (auto channels=0 ; channels < numChannels ; channels++)
             {
-                const float* readPntr = circularBuffer.read(channels,grain.getStartSample(),grain.getCurrentSample());
-                float grainNxtSample = grain.getNextSample(readPntr);
-                bufferRef.addSample(channels,samples,grainNxtSample);
+                //std::cout << "in sample loop"<< std::endl;
 
+                //std::cout << grainNxtSample << " " << std::endl ;
+                if (samples < bufferRef.getNumSamples()-1)
+                {
+                    bufferRef.addSample(channels,samples,grainNxtSample);
+                }
             }
         }
         if (grain.isFinished())
         {
             grainPool.returnGrain(&grain);
-            break;
+            continue;
         }
     }
 }

@@ -29,7 +29,7 @@ void Scheduler::process(const GranularSettings& settings,GrainPool& grainPool,in
         Grain* grain = grainPool.getInactiveGrain();
         if (grain != nullptr)
         {
-            grain->configure(settings.grainDuration,settings.playbackRate,bufferWriteHead , 1 , (settings.grainDuration * sampleRate), settings.type);
+            grain->configure(bufferWriteHead,settings.playbackRate , 1 , (settings.grainDuration * sampleRate), settings.type);
         }
     }
 

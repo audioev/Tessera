@@ -4,6 +4,9 @@
 
 #include "GrainEnvelope.h"
 
+#include <iostream>
+#include <ostream>
+
 GrainEnvelope::GrainEnvelope()
 {
 
@@ -19,6 +22,7 @@ void GrainEnvelope::configure(EnvelopeType type,int totalSamples)
 
 float GrainEnvelope::calculate(float phase)
 {
+
     switch (type)
     {
         case EnvelopeType::Hann: return getHannEnvelope(phase);
@@ -31,7 +35,7 @@ float GrainEnvelope::getHannEnvelope(float samplePhase)
 {
     float HannReturnAmplitude;
 
-    HannReturnAmplitude = 2.f * M_PI * samplePhase;
+    HannReturnAmplitude = 0.5f * (1.0f - cos(2.f * M_PI * samplePhase));
     return HannReturnAmplitude;
 }
 

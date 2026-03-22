@@ -90,6 +90,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     leftChannelFifo.prepare(samplesPerBlock);
+    granularEngine.prepare(sampleRate,samplesPerBlock,getTotalNumInputChannels());
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -141,20 +142,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
-    }
-
+    //std::cout << "entering process loop" << std::endl;
+    grainSettings=getGranularSettings(apvts);
     leftChannelFifo.update(buffer);
+    granularEngine.process(buffer,grainSettings);
 }
 
 //==============================================================================
@@ -189,9 +180,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDensity",1),"Grain Density",juce::NormalisableRange<float>(1.f,100.f,0.1f,0.5f),10.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDensity",1),"Grain Density",juce::NormalisableRange<float>(8,256,5,1),10));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(10.f,500.f,0.1f,0.5f),10.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(0.05f,100.f,0.1f,0.5f),0.05f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.1f,4.f,0.01f,0.5f),1.f));
 
@@ -209,6 +200,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("bypass",1),"Bypass",false));
 
     return layout;
+}
+
+GranularSettings AudioPluginAudioProcessor::getGranularSettings(juce::AudioProcessorValueTreeState& apvts)
+{
+    GranularSettings settings;
+
+    settings.grainDensity = static_cast<int>(apvts.getRawParameterValue("grainDensity")->load());
+    settings.grainDuration = apvts.getRawParameterValue("grainDuration")->load();
+    settings.playbackRate = apvts.getRawParameterValue("playBackSpeed")->load();
+    settings.type = EnvelopeType::Hann;
+    settings.grainAttack = apvts.getRawParameterValue("grainAttack")->load();
+    settings.grainDecay = apvts.getRawParameterValue("grainDecay")->load();
+    settings.grainSustain = apvts.getRawParameterValue("grainSustain")->load();
+    settings.globalAttack = apvts.getRawParameterValue("globalAttack")->load();
+    settings.globalDecay = apvts.getRawParameterValue("globalDecay")->load();
+    settings.globalRelease = apvts.getRawParameterValue("globalRelease")->load();
+    settings.globalSustain = apvts.getRawParameterValue("globalSustain")->load();
+
+    return settings;
 }
 
 

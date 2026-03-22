@@ -17,10 +17,10 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics & g,
 
     auto bounds  = Rectangle<float>(x, y, w, h);
 
-    g.setColour(Colour(97u, 18u, 167u));
+    g.setColour(Colour(1u,5u,200u));
     g.fillEllipse(bounds);
 
-    g.setColour(Colour(255u , 154u, 1u));
+    g.setColour(Colour(255u , 5u, 10u));
     g.drawEllipse(bounds,1.f);
 
     if(auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
@@ -361,7 +361,7 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     bool bypassed = powerButton.getToggleState();
 
-    g.fillAll(juce::Colours::black);
+    g.fillAll(juce::Colours::transparentBlack);
     //bypass interactivity
     g.setColour( bypassed ? juce::Colours::grey : juce::Colours::white);
     // bordered boxes

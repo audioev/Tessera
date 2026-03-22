@@ -15,12 +15,13 @@ public:
     Grain();
     ~Grain();
 
-    void configure(int duration, int currentSample, float pitch, float amplitude,int totalSamples ,EnvelopeType type);
+    void configure( int currentSample, float pitch, float amplitude,int totalSamples ,EnvelopeType type);
     void setActive(bool status);
     bool getActive();
     float getNextSample( const float *sample);
     int getCurrentSample(){return currentSample;}
     int getStartSample(){return startSample;}
+    int getTotalSamples(){return totalSamples;}
     bool isFinished();
     void reset();
 

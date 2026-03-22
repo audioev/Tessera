@@ -1,6 +1,8 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "./GranularEngine/GranularSettings.h"
+#include "./GranularEngine/Engine.h"
 
 //==============================================================================
 
@@ -137,25 +139,6 @@ private:
     }
 };
 
-//==============================================================================
-
-struct GranularSettings
-{
-    float grainDensity{10.f};
-    float grainDuration{0.1f};
-    float playbackRate{1.f};
-
-    float grainAttack{0.1f};
-    float grainDecay{0.1f};
-    float grainSustain{0.1f};
-
-    float globalAttack{0.01f};
-    float globalDecay{0.01f};
-    float globalSustain{0.1f};
-    float globalRelease{0.1f};
-};
-
-GranularSettings getGranularSettings(juce::AudioProcessorValueTreeState& avpts);
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -202,7 +185,11 @@ public:
 
     SingleChannelSampleFifo<juce::AudioBuffer<float>> leftChannelFifo{ Channel::Left };
 
+    GranularSettings getGranularSettings(juce::AudioProcessorValueTreeState& apvts);
+
 private:
+    Engine granularEngine;
+    GranularSettings grainSettings;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
