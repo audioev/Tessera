@@ -9,8 +9,7 @@
 #include "GrainPool.h"
 #include "Scheduler.h"
 #include "CircularBuffer.h"
-
-#define size_t MAX_BUFF_SIZE 512;
+#include "GranularSettings.h"
 
 class Engine
 {
@@ -18,8 +17,16 @@ public:
     Engine();
     ~Engine();
 
+    void prepare(double sampleRate, int samplesPerBlock, int numChannels);
+    void process(juce::AudioBuffer<float>& bufferRef,const GranularSettings& settings);
+
 private:
-    
+    CircularBuffer circularBuffer;
+    GrainPool grainPool;
+    Scheduler scheduler;
+    double sampleRate;
+    int samplesPerBlock;
+    int numChannels;
 };
 
 
