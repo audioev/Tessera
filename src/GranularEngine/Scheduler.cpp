@@ -3,3 +3,36 @@
 //
 
 #include "Scheduler.h"
+
+Scheduler::Scheduler()
+{
+
+}
+
+Scheduler::~Scheduler()
+{
+
+}
+
+void Scheduler::prepare(double sampleRate, int samplesPerBlock)
+{
+    this->sampleRate = sampleRate;
+    this->samplesPerBlock = samplesPerBlock;
+}
+
+void Scheduler::process(const GranularSettings& settings,GrainPool& grainPool,int bufferWriteHead)
+{
+    interOnset = static_cast<int>(sampleRate) / settings.grainDensity;
+    nextOnset += samplesPerBlock;
+    if (nextOnset > interOnset)
+    {
+        Grain* grain = grainPool.getInactiveGrain();
+        if (grain != nullptr)
+        {
+            grain->configure(settings.grainDuration,settings.playbackRate,bufferWriteHead , 1 , (settings.grainDuration * sampleRate), settings.type);
+        }
+    }
+
+}
+
+
