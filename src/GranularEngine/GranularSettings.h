@@ -9,7 +9,7 @@ struct GranularSettings
 {
     static constexpr float maxGrainDurationInSeconds{1.0f};
 
-    float grainDensity{10.f};
+    int grainDensity{10};
     float grainDuration{0.1f};
     float playbackRate{1.f};
 

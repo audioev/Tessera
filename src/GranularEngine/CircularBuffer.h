@@ -12,7 +12,6 @@ class CircularBuffer
     {
         writeHead = 0;
     };
-    ~CircularBuffer();
 
     void prepare(int numChannels, int numSamples)
     {
@@ -36,6 +35,8 @@ class CircularBuffer
     {
         return buffer.getReadPointer(channel, (startSample + currentSample) % buffer.getNumSamples());
     }
+
+    int getWriteHead(){return writeHead;}
 
     private:
     int writeHead = 0;

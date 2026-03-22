@@ -34,3 +34,13 @@ float GrainEnvelope::getHannEnvelope(float samplePhase)
     HannReturnAmplitude = 2.f * M_PI * samplePhase;
     return HannReturnAmplitude;
 }
+
+float GrainEnvelope::getGaussianEnvelope(float samplePhase)
+{
+    return samplePhase;
+}
+
+float GrainEnvelope::getTrapezoidEnvelope(float samplePhase)
+{
+    return samplePhase;
+}

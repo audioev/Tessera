@@ -4,7 +4,10 @@
 
 #include "GrainPool.h"
 
-GrainPool::GrainPool(){}
+GrainPool::GrainPool()
+{
+
+}
 
 GrainPool::~GrainPool(){}
 
@@ -18,7 +21,7 @@ void GrainPool::prepare()
 
 Grain* GrainPool::getInactiveGrain()
 {
-    for (auto grain : grains)
+    for (auto& grain : grains)
     {
         if (grain.getActive() == false)
         {

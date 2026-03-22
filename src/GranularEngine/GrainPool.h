@@ -14,6 +14,8 @@ class GrainPool
     void prepare();
     Grain* getInactiveGrain();
     void returnGrain(Grain* grain);
+    auto begin(){return grains.begin();}
+    auto end(){return grains.end();}
 
 private:
     std::array<Grain, 128> grains;
