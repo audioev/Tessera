@@ -35,16 +35,22 @@ float GrainEnvelope::getHannEnvelope(float samplePhase)
 {
     float HannReturnAmplitude;
 
-    HannReturnAmplitude = 0.5f * (1.0f - cos(2.f * M_PI * samplePhase));
+    HannReturnAmplitude = 0.5f * (1.0f - cos(2.0f * M_PI * samplePhase));
     return HannReturnAmplitude;
 }
 
 float GrainEnvelope::getGaussianEnvelope(float samplePhase)
 {
-    return samplePhase;
+    float GaussianReturnAmplitude;
+    float gWindowWidth = 0.15f;
+
+    GaussianReturnAmplitude = std::exp(-0.5f * (std::exp(samplePhase - 0.5f)/ gWindowWidth));
+    return GaussianReturnAmplitude;
 }
 
 float GrainEnvelope::getTrapezoidEnvelope(float samplePhase)
 {
+    float TrapezoidReturnAmplitude;
+
     return samplePhase;
 }

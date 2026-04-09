@@ -3,8 +3,6 @@
 //
 
 #pragma once
-
-#include <cmath>
 #include "EnvelopeType.h"
 
 class GrainEnvelope
@@ -24,7 +22,6 @@ private:
     float getHannEnvelope(float samplePhase);
     float getGaussianEnvelope(float samplePhase);
     float getTrapezoidEnvelope(float samplePhase);
-
 };
 
 
