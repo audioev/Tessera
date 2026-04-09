@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include "Grain.h"
 #include "GrainPool.h"
 #include "GranularSettings.h"
 
@@ -13,17 +12,24 @@ public:
     Scheduler();
     ~Scheduler();
 
-    void prepare(double sampleRate, int samplesPerBlock);
+    void prepare(double sampleRate, int samplesPerBlock, int overlapOffset,int bufSize);
     void process(const GranularSettings& settings,GrainPool& grainPool,int bufferWriteHead);
-    float synthesize();
+    //float synthesize();
 
     private:
+    int overlapOffset ;
     GrainPool grainPool;
     double sampleRate;
     int samplesPerBlock;
     int interOnset;
     int nextOnset;
     int bufferWriteHead;
+    float randomOffset;
+    juce::Random random;
+    float maxSprayInSamples;
+    int sprayedStartSamples;
+    int bufSize;
+    float minGrainDuration;
 };
 
 
