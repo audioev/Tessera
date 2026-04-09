@@ -23,6 +23,7 @@ Grain* GrainPool::getInactiveGrain()
 {
     for (auto& grain : grains)
     {
+        std::cout << "searching for inactive grain "<< std::endl;
         if (grain.getActive() == false)
         {
             return &grain;

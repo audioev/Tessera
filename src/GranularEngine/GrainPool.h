@@ -18,7 +18,7 @@ class GrainPool
     auto end(){return grains.end();}
 
 private:
-    std::array<Grain, 128> grains;
+    std::array<Grain, 256> grains;
 };
 
 
