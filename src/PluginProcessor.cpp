@@ -86,11 +86,17 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    //juce::dsp::ProcessSpec spec;
+
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    juce::dsp::ProcessSpec spec {};
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
+    spec.numChannels = static_cast<juce::uint32>(getTotalNumInputChannels());
+    dryWetMixer.prepare(spec);
     leftChannelFifo.prepare(samplesPerBlock);
     granularEngine.prepare(sampleRate,samplesPerBlock,getTotalNumInputChannels());
+
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -142,10 +148,24 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+
     //std::cout << "entering process loop" << std::endl;
     grainSettings=getGranularSettings(apvts);
-    leftChannelFifo.update(buffer);
-    granularEngine.process(buffer,grainSettings);
+
+    if (!grainSettings.bypass)
+    {
+        dryWetMixer.setWetMixProportion(grainSettings.dryWet);
+
+        juce::dsp::AudioBlock<const float> dryBlock(buffer);
+        dryWetMixer.pushDrySamples(dryBlock);
+
+        leftChannelFifo.update(buffer);
+
+        granularEngine.process(buffer,grainSettings);
+        dryWetMixer.setWetLatency(0);
+        dryWetMixer.mixWetSamples(juce::dsp::AudioBlock<float>(buffer));
+        buffer.applyGain(juce::Decibels::decibelsToGain(grainSettings.postGain));
+    }
 }
 
 //==============================================================================
@@ -180,25 +200,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDensity",1),"Grain Density",juce::NormalisableRange<float>(8,256,5,1),10));
+    layout.add(std::make_unique<juce::AudioParameterInt> (juce::ParameterID("grainDensity",1),"Grain Density",1,256,8));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(0.05f,100.f,0.1f,0.5f),0.05f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(0.002f,100.f,0.01f,0.5f),0.05f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.1f,4.f,0.01f,0.5f),1.f));
-
-    //pre-grain envelope
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainAttack",1),"Grain Attack",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDecay",1),"Grain Decay",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.02f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainSustain",1),"Grain Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.08f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.5f,2.f,0.01f),1.f));
 
     //global-output envelope
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalAttack",1),"Global Attack",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.01f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalDecay",1),"Global Decay",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.1f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalSustain",1),"Global Sustain",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.2f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalRelease",1),"Global Release",juce::NormalisableRange<float>(0.001f,10.f,0.001f,0.03f),0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalAttack",1),"Global Attack",juce::NormalisableRange<float>(0.1f,100.f,0.1f,0.03f),0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalDecay",1),"Global Decay",juce::NormalisableRange<float>(0.01f,10.f,0.01f,0.03f),0.1f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalSustain",1),"Global Sustain",juce::NormalisableRange<float>(0.1f,100.f,0.01f),0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalRelease",1),"Global Release",juce::NormalisableRange<float>(0.01f,100.f,0.001f,0.03f),0.2f));
 
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("randomness",1),"Randomness",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.f));
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("bypass",1),"Bypass",false));
 
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("postGain",1),"Post Gain",juce::NormalisableRange<float>(-24.f,6.f,0.1f),0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("dryWet", 1), "Mix", juce::NormalisableRange<float>(0.f,1.0f,0.01f),0.9f));
     return layout;
 }
 
@@ -210,14 +228,14 @@ GranularSettings AudioPluginAudioProcessor::getGranularSettings(juce::AudioProce
     settings.grainDuration = apvts.getRawParameterValue("grainDuration")->load();
     settings.playbackRate = apvts.getRawParameterValue("playBackSpeed")->load();
     settings.type = EnvelopeType::Hann;
-    settings.grainAttack = apvts.getRawParameterValue("grainAttack")->load();
-    settings.grainDecay = apvts.getRawParameterValue("grainDecay")->load();
-    settings.grainSustain = apvts.getRawParameterValue("grainSustain")->load();
     settings.globalAttack = apvts.getRawParameterValue("globalAttack")->load();
     settings.globalDecay = apvts.getRawParameterValue("globalDecay")->load();
     settings.globalRelease = apvts.getRawParameterValue("globalRelease")->load();
     settings.globalSustain = apvts.getRawParameterValue("globalSustain")->load();
-
+    settings.bypass = static_cast<bool>(apvts.getRawParameterValue("bypass")->load());
+    settings.randomness = apvts.getRawParameterValue("randomness")->load();
+    settings.postGain = apvts.getRawParameterValue("postGain")->load();
+    settings.dryWet = apvts.getRawParameterValue("dryWet")->load();
     return settings;
 }
 

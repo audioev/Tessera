@@ -3,6 +3,9 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "./GranularEngine/GranularSettings.h"
 #include "./GranularEngine/Engine.h"
+#include "juce_dsp/juce_dsp.h"
+
+
 
 //==============================================================================
 
@@ -181,11 +184,14 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     //==============================================================================
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout ();
+
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", createParameterLayout()};
 
     SingleChannelSampleFifo<juce::AudioBuffer<float>> leftChannelFifo{ Channel::Left };
 
     GranularSettings getGranularSettings(juce::AudioProcessorValueTreeState& apvts);
+
+    juce::dsp::DryWetMixer<float> dryWetMixer { 0 };
 
 private:
     Engine granularEngine;

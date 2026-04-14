@@ -20,6 +20,8 @@ struct GranularSettings
     float globalDecay{0.01f};
     float globalSustain{0.1f};
     float globalRelease{0.1f};
+    float postGain{0.5f};
+    float dryWet{0.9f};
 
     EnvelopeType type{EnvelopeType::Gaussian};
 };

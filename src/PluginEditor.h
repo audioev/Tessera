@@ -16,10 +16,54 @@ struct CustomLookAndFeel : juce::LookAndFeel_V4
                                 float sliderPosProportional,
                                 float rotaryStartAngle,
                                 float rotaryEndAngle,
-                                juce::Slider& ) override;
-
+                                juce::Slider& slider) override;
+    void drawLinearSlider(juce::Graphics& g,
+                            int x,
+                            int y,
+                            int width,
+                            int height,
+                            float sliderPos,
+                            float minSliderPos,
+                            float maxSliderPos,
+                            juce::Slider::SliderStyle style,
+                            juce::Slider& slider) override;
 };
 
+//=============================================================================
+struct VerticalSliderWithLabels : juce::Slider
+{
+    VerticalSliderWithLabels(juce::RangedAudioParameter& rap, const juce::String& unitSuffix) :
+    juce::Slider(juce::Slider::SliderStyle::LinearVertical,
+                juce::Slider::TextEntryBoxPosition::NoTextBox),
+    param(&rap),
+    suffix(unitSuffix)
+    {
+        setLookAndFeel(&lnf);
+    }
+
+    ~VerticalSliderWithLabels()
+    {
+        setLookAndFeel(nullptr);
+    }
+
+    struct LabelPos
+    {
+        float pos;
+        juce::String label;
+    };
+
+    juce::Array<LabelPos> labels;
+
+    void paint(juce::Graphics& g )override;
+    juce::Rectangle<int> getSliderBounds() const;
+    int getTextHeight() const { return 14; }
+    juce::String getDisplayString() const;
+
+private:
+    CustomLookAndFeel lnf;
+    juce::RangedAudioParameter* param;
+    juce::String suffix;
+};
 //=============================================================================
 
 struct RotarySliderWithLabels : juce::Slider
@@ -101,13 +145,14 @@ private:
     RotarySliderWithLabels grainDensitySlider,
     grainDurationSlider,
     playBackSpeedSlider,
-    grainAttackSlider,
-    grainDecaySlider,
-    grainSustainSlider,
     globalAttackSlider,
     globalDecaySlider,
     globalSustainSlider,
-    globalReleaseSlider;
+    globalReleaseSlider,
+    randomnessSlider,
+    dryWetSlider;
+
+    VerticalSliderWithLabels postGainSlider;
 
     //APVTS is used to manage global plugin state
     using APVTS = juce::AudioProcessorValueTreeState;
@@ -119,15 +164,15 @@ private:
     Attachment grainDensitySliderAttachment,
     grainDurationSliderAttachment,
     playBackSpeedSliderAttachment,
-    grainAttackSliderAttachment,
-    grainDecaySliderAttachment,
-    grainSustainSliderAttachment,
     globalAttackSliderAttachment,
     globalDecaySliderAttachment,
     globalSustainSliderAttachment,
-    globalReleaseSliderAttachment;
+    globalReleaseSliderAttachment,
+    randomnessSliderAttachment,
+    postGainSliderAttachment,
+    dryWetSliderAttachment;
 
-    juce::Rectangle<int> grainEnvBox, globalEnvBox, waveFormBox;
+    juce::Rectangle<int> grainEnvBox, globalEnvBox, waveFormBox, gainBox;
     juce::TextButton powerButton;
     juce::ButtonParameterAttachment powerButtonAttachment;
 

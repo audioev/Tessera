@@ -1,6 +1,132 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g,
+                                        int x, int y, int w, int h,
+                                        float sliderPos,
+                                        float minSliderPos,
+                                        float maxSliderPos,
+                                        juce::Slider::SliderStyle style,
+                                        juce::Slider& slider)
+{
+    using namespace juce;
+
+    auto bounds = Rectangle<float>(x, y, w, h);
+    auto center = bounds.getCentre();
+    Rectangle<float>track;
+    Rectangle<float>filledTrack;
+
+    track.setLeft(center.getX() - 3);
+    track.setRight(center.getX() + 3);
+    track.setTop(bounds.getY());
+    track.setBottom(bounds.getBottom());
+
+    filledTrack.setLeft(center.getX() - 3);
+    filledTrack.setRight(center.getX() + 3);
+    filledTrack.setTop(sliderPos);
+    filledTrack.setBottom(bounds.getBottom());
+
+    g.setColour(Colours::rebeccapurple.darker());
+    g.fillRoundedRectangle(track, 3.f);
+    g.setColour(Colours::rebeccapurple);
+    g.fillRoundedRectangle(filledTrack, 3.f);
+
+    Rectangle<float>thumb;
+
+    thumb.setLeft(center.getX() - 12);
+    thumb.setRight(center.getX() + 12);
+    thumb.setTop(sliderPos - 5);
+    thumb.setBottom(sliderPos + 5);
+
+    g.setColour(Colours::greenyellow);
+    g.fillRoundedRectangle(thumb, 3.f);
+
+    if (auto* vswl = dynamic_cast<VerticalSliderWithLabels*>(&slider))
+    {
+        g.setFont(vswl->getTextHeight());
+        auto text = vswl->getDisplayString();
+        auto strWidth = g.getCurrentFont().getStringWidth(text);
+
+        Rectangle<float> r;
+        r.setSize(strWidth + 4, vswl->getTextHeight() + 2);
+        r.setCentre(center.getX(),sliderPos);
+
+        g.setColour(Colours::black);
+        g.fillRect(r);
+
+        g.setColour(Colours::white);
+        g.drawFittedText(text,r.toNearestInt(),juce::Justification::centred, 1);
+    }
+}
+
+//==============================================================================
+
+void VerticalSliderWithLabels::paint(juce::Graphics& g)
+{
+    using namespace juce;
+
+    auto range = getRange();
+    auto sliderBounds = getSliderBounds();
+
+    auto sliderPos = jmap(getValue(),
+                        range.getStart(),range.getEnd(),
+                        static_cast<double>(sliderBounds.getBottom()),
+                        static_cast<double>(sliderBounds.getY()));
+    getLookAndFeel().drawLinearSlider(g,
+                                    sliderBounds.getX(),
+                                    sliderBounds.getY(),
+                                    sliderBounds.getWidth(),
+                                    sliderBounds.getHeight(),
+                                    static_cast<float>(sliderPos),
+                                    static_cast<float>(sliderBounds.getBottom()),
+                                    static_cast<float>(sliderBounds.getY()),
+                                    getSliderStyle(),
+                                    *this);
+    g.setColour(Colours::white);
+    g.setFont(getTextHeight());
+
+    auto minLabel = String(range.getStart());
+    auto maxLabel = String(range.getEnd());
+
+    g.drawFittedText(maxLabel,
+                    sliderBounds.getX(),sliderBounds.getY() - getTextHeight(),
+                    sliderBounds.getWidth(),getTextHeight(),
+                    Justification::centred,1);
+    g.drawFittedText(minLabel,
+                sliderBounds.getX(),sliderBounds.getBottom(),
+                sliderBounds.getWidth(),getTextHeight(),
+                Justification::centred,1);
+}
+
+juce::Rectangle<int> VerticalSliderWithLabels::getSliderBounds() const
+{
+
+    auto bounds = getLocalBounds();
+    bounds.removeFromTop(getTextHeight());
+    bounds.removeFromBottom(getTextHeight());
+    bounds.reduce(bounds.getWidth() / 3 , 0);
+    return bounds;
+}
+
+juce::String VerticalSliderWithLabels::getDisplayString() const
+{
+    if (auto choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param) )
+        return choiceParam->getCurrentChoiceName();
+
+    juce::String str;
+    auto val = param->getValue();
+    auto denormVal = param->getNormalisableRange().convertFrom0to1(val);
+
+    str << juce::String(denormVal,1);
+
+    if( suffix.isNotEmpty() )
+    {
+        str << " " << suffix;
+    }
+
+    return str;
+}
+
 //==============================================================================
 
 void CustomLookAndFeel::drawRotarySlider(juce::Graphics & g,
@@ -17,10 +143,10 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics & g,
 
     auto bounds  = Rectangle<float>(x, y, w, h);
 
-    g.setColour(Colour(1u,5u,200u));
+    g.setColour(Colours::rebeccapurple);
     g.fillEllipse(bounds);
 
-    g.setColour(Colour(255u , 5u, 10u));
+    g.setColour(Colours::greenyellow);
     g.drawEllipse(bounds,1.f);
 
     if(auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
@@ -88,7 +214,7 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
     auto center = sliderBounds.toFloat().getCentre();
     auto radius = sliderBounds.getWidth() * 0.5f;
 
-    g.setColour(Colour(0u, 172u, 1u));
+    g.setColour(juce::Colours::white);
     g.setFont(getTextHeight());
 
     auto  numChoices = labels.size();
@@ -138,27 +264,14 @@ juce::String RotarySliderWithLabels::getDisplayString() const
         return choiceParam->getCurrentChoiceName();
 
     juce::String str;
-    //bool addK = false;
+    auto val = param->getValue();
+    auto denormVal = param->getNormalisableRange().convertFrom0to1(val);
 
-    if( auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
-    {
-        float val = getValue();
-        if( val > 999.f)
-        {
-            val /= 1000.f;
-            //addK = true;
-        }
-        str = juce::String(val);
-    }
-    else
-    {
-        jassertfalse;//hopefully shouldnt happen
-    }
+    str << juce::String(denormVal,1);
 
     if( suffix.isNotEmpty() )
     {
-        str << " ";
-        str << suffix;
+        str << " " << suffix;
     }
 
     return str;
@@ -220,7 +333,7 @@ void WaveFormComponent:: paint (juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
 
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colours::grey);
     g.drawRect(getRenderArea());
 
     const auto analysisArea = getAnalysisArea();
@@ -277,57 +390,60 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 grainDensitySlider(*processorRef.apvts.getParameter("grainDensity"),"Grains"),
 grainDurationSlider(*processorRef.apvts.getParameter("grainDuration"),"Ms"),
 playBackSpeedSlider(*processorRef.apvts.getParameter("playBackSpeed"),"x"),
-grainAttackSlider(*processorRef.apvts.getParameter("grainAttack"),"Ms"),
-grainDecaySlider(*processorRef.apvts.getParameter("grainDecay"),"Ms"),
-grainSustainSlider(*processorRef.apvts.getParameter("grainSustain"),"Ms"),
 globalAttackSlider(*processorRef.apvts.getParameter("globalAttack"),"Ms"),
 globalDecaySlider(*processorRef.apvts.getParameter("globalDecay"),"Ms"),
 globalSustainSlider(*processorRef.apvts.getParameter("globalSustain"),"Ms"),
 globalReleaseSlider(*processorRef.apvts.getParameter("globalRelease"),"Ms"),
+randomnessSlider(*processorRef.apvts.getParameter("randomness"),"%"),
+postGainSlider(*processorRef.apvts.getParameter("postGain"),"Db"),
+dryWetSlider(*processorRef.apvts.getParameter("dryWet"), "%"),
 
 waveFormComponent(processorRef),
 
 grainDensitySliderAttachment(processorRef.apvts,"grainDensity",grainDensitySlider),
 grainDurationSliderAttachment(processorRef.apvts,"grainDuration",grainDurationSlider),
 playBackSpeedSliderAttachment(processorRef.apvts,"playBackSpeed",playBackSpeedSlider),
-grainAttackSliderAttachment(processorRef.apvts,"grainAttack",grainAttackSlider),
-grainDecaySliderAttachment(processorRef.apvts,"grainDecay",grainDecaySlider),
-grainSustainSliderAttachment(processorRef.apvts,"grainSustain",grainSustainSlider),
 globalAttackSliderAttachment(processorRef.apvts, "globalAttack",globalAttackSlider),
 globalDecaySliderAttachment(processorRef.apvts, "globalDecay",globalDecaySlider),
 globalReleaseSliderAttachment(processorRef.apvts, "globalRelease",globalReleaseSlider),
 globalSustainSliderAttachment(processorRef.apvts,"globalSustain",globalSustainSlider),
-powerButtonAttachment(*processorRef.apvts.getParameter("bypass"),powerButton)
+powerButtonAttachment(*processorRef.apvts.getParameter("bypass"),powerButton),
+randomnessSliderAttachment(processorRef.apvts,"randomness",randomnessSlider),
+postGainSliderAttachment(processorRef.apvts,"postGain",postGainSlider),
+dryWetSliderAttachment(processorRef.apvts,"dryWet",dryWetSlider)
 {
     grainDensitySlider.labels.add({0.f,"1"});
     grainDensitySlider.labels.add({1.f,"256"});
 
-    grainDurationSlider.labels.add({0.f,"5ms"});
-    grainDurationSlider.labels.add({1.f,"500ms"});
+    grainDurationSlider.labels.add({0.f,"2ms"});
+    grainDurationSlider.labels.add({1.f,"100ms"});
 
-    playBackSpeedSlider.labels.add({0.f,"-6x"});
-    playBackSpeedSlider.labels.add({1.f,"6x"});
+    playBackSpeedSlider.labels.add({0.f,".5x"});
+    playBackSpeedSlider.labels.add({0.5f,"1x"});
+    playBackSpeedSlider.labels.add({1.f,"2x"});
     //
-    grainAttackSlider.labels.add({0.f,"0.1ms"});
-    grainAttackSlider.labels.add({1.f,"100ms"});
+    globalAttackSlider.labels.add({0.f,"0.1ms"});
+    globalAttackSlider.labels.add({1.f,"100ms"});
 
-    grainDecaySlider.labels.add({0.f,"0.01ms"});
-    grainDecaySlider.labels.add({1.f,"10ms"});
+    globalDecaySlider.labels.add({0.f,"0.01ms"});
+    globalDecaySlider.labels.add({1.f,"10ms"});
 
-    grainSustainSlider.labels.add({0.f,"0.1ms"});
-    grainSustainSlider.labels.add({1.f,"100ms"});
-    //
-    globalAttackSlider.labels.add({0.f,"0.5ms"});
-    globalAttackSlider.labels.add({1.f,"500ms"});
+    globalReleaseSlider.labels.add({0.f,"0.01ms"});
+    globalReleaseSlider.labels.add({1.f,"100ms"});
 
-    globalDecaySlider.labels.add({0.f,"0.05ms"});
-    globalDecaySlider.labels.add({1.f,"50ms"});
+    globalSustainSlider.labels.add({0.f,"0.1ms"});
+    globalSustainSlider.labels.add({1.f,"100ms"});
 
-    globalReleaseSlider.labels.add({0.f,"0.5ms"});
-    globalReleaseSlider.labels.add({1.f,"500ms"});
+    randomnessSlider.labels.add({0.f,"0%"});
+    randomnessSlider.labels.add({1.f,"100%"});
 
-    globalSustainSlider.labels.add({0.f,"5ms"});
-    globalSustainSlider.labels.add({1.f,"500ms"});
+    postGainSlider.labels.add({0.f,"-24dB"});
+    postGainSlider.labels.add({0.5f,"0dB"});
+    postGainSlider.labels.add({1.f,"+6dB"});
+
+    dryWetSlider.labels.add({0.f,"0%"});
+    dryWetSlider.labels.add({0.5f,"50%"});
+    dryWetSlider.labels.add({1.f,"100%"});
 
     powerButton.setButtonText("Bypass");
     powerButton.setClickingTogglesState(true);
@@ -359,25 +475,25 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    bool bypassed = powerButton.getToggleState();
+    bool bypass = powerButton.getToggleState();
 
-    g.fillAll(juce::Colours::transparentBlack);
+    g.fillAll(bypass? juce::Colours::grey : juce::Colours::black);
     //bypass interactivity
-    g.setColour( bypassed ? juce::Colours::grey : juce::Colours::white);
+    g.setColour(juce::Colours::white);
     // bordered boxes
     g.drawRect(grainEnvBox, 1);
     g.drawRect(globalEnvBox, 1);
     g.drawRect(waveFormBox, 1);
-
+    g.drawRect(gainBox, 1);
     // section labels
     g.setFont(12.f);
     g.drawFittedText("Grain Parameters",
         10, 245, 180, 20,
         juce::Justification::centred, 1);
-    g.drawFittedText("Grain ADR",
-        grainEnvBox.getX(), grainEnvBox.getY() - 20,
-        grainEnvBox.getWidth(), 20,
-        juce::Justification::centred, 1);
+    // g.drawFittedText("Grain ADR",
+    //     grainEnvBox.getX(), grainEnvBox.getY() - 20,
+    //     grainEnvBox.getWidth(), 20,
+    //     juce::Justification::centred, 1);
     g.drawFittedText("Global ADSR",
         globalEnvBox.getX(), globalEnvBox.getY() - 20,
         globalEnvBox.getWidth(), 20,
@@ -402,32 +518,20 @@ void AudioPluginAudioProcessorEditor::resized()
     //bypass button
     powerButton.setBounds(10,10,50,50);
 
-    waveFormBox = juce::Rectangle<int>(10,70,980,170);
+    waveFormBox = juce::Rectangle(10,70,980,170);
     waveFormComponent.setBounds(waveFormBox);
 
     //granular parameters area
     grainDensitySlider.setBounds(grainParamX , bottomY + 20, knobLargeSize, knobLargeSize);
     grainDurationSlider.setBounds(grainParamX, bottomY + 140, knobSmallSize, knobSmallSize);
     playBackSpeedSlider.setBounds(grainParamX + knobSmallSize + 10 , bottomY + 140, knobSmallSize, knobSmallSize);
-    //grain envelope area
-    int grainEnvX = 260;
-    int grainEnvW = 340;
-    int grainEnvH = 160;
-    grainEnvBox = juce::Rectangle<int>(grainEnvX, bottomY +30,grainEnvW,grainEnvH);
-
-    int grainKnobSize = 90;
-    int grainKnobY = grainEnvBox.getCentreY() - grainKnobSize / 2;
-    int grainSpacing = (grainEnvW - grainKnobSize * 3) / 4;
-
-    grainAttackSlider.setBounds(grainEnvBox.getX() + grainSpacing, grainKnobY , grainKnobSize, grainKnobSize);
-    grainDecaySlider.setBounds(grainEnvBox.getX() + grainSpacing * 2 + grainKnobSize, grainKnobY, grainKnobSize, grainKnobSize);
-    grainSustainSlider.setBounds(grainEnvBox.getX() + grainSpacing * 3 + grainKnobSize * 2, grainKnobY, grainKnobSize, grainKnobSize);
+    randomnessSlider.setBounds(grainParamX + knobSmallSize + 10,bottomY + 20,knobSmallSize,knobSmallSize);
 
     //global envelope area
     int globalEnvX = 630;
     int globalEnvW = 260;
     int globalEnvH = 200;
-    globalEnvBox = juce::Rectangle<int>(globalEnvX,bottomY + 10,globalEnvW,globalEnvH);
+    globalEnvBox = juce::Rectangle(globalEnvX,bottomY + 10,globalEnvW,globalEnvH);
 
     int globalKnobSize = 90;
     int globalPadX = (globalEnvW - globalKnobSize * 2) / 3;
@@ -437,6 +541,8 @@ void AudioPluginAudioProcessorEditor::resized()
     globalDecaySlider.setBounds(globalEnvBox.getX() + globalPadX * 2 + globalKnobSize, globalEnvBox.getY() + globalPadY, globalKnobSize, globalKnobSize);
     globalSustainSlider.setBounds(globalEnvBox.getX() + globalPadX, globalEnvBox.getY() + globalPadY * 2 + globalKnobSize, globalKnobSize, globalKnobSize);
     globalReleaseSlider.setBounds(globalEnvBox.getX() + globalPadX * 2 + globalKnobSize, globalEnvBox.getY() + globalPadY * 2 + globalKnobSize, globalKnobSize, globalKnobSize);
+    dryWetSlider.setBounds(450,bottomY,globalKnobSize,globalKnobSize);
+    postGainSlider.setBounds(350,bottomY,60,220);
 
 }
 
@@ -446,13 +552,13 @@ std::vector<juce::Component*> AudioPluginAudioProcessorEditor::getComps()
         &grainDensitySlider,
         &grainDurationSlider,
         &playBackSpeedSlider,
-        &grainAttackSlider,
-        &grainDecaySlider,
-        &grainSustainSlider,
         &globalAttackSlider,
         &globalDecaySlider,
         &globalSustainSlider,
         &globalReleaseSlider,
-        &waveFormComponent
+        &waveFormComponent,
+        &randomnessSlider,
+        &postGainSlider,
+        &dryWetSlider,
     };
 }
