@@ -13,6 +13,8 @@ class CircularBuffer
         writeHead = 0;
     };
 
+    ~CircularBuffer() = default;
+
     void prepare(int numChannels, int numSamples)
     {
         buffer.setSize(numChannels,numSamples);

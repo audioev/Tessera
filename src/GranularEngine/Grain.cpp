@@ -6,8 +6,6 @@
 
 #include "Grain.h"
 
-//#include "../../../../../../Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreGraphics.framework/Headers/CGRenderingBufferProvider.h"
-
 Grain::Grain()
 {
     startSample = 0;
@@ -18,7 +16,7 @@ Grain::Grain()
     totalSamples = 0;
 }
 
-Grain::~Grain(){}
+Grain::~Grain() = default;
 
 void Grain::setActive(bool status)
 {

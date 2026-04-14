@@ -14,7 +14,7 @@ public:
 
     void prepare(double sampleRate, int samplesPerBlock, int overlapOffset,int bufSize);
     void process(const GranularSettings& settings,GrainPool& grainPool,int bufferWriteHead);
-    //float synthesize();
+
 
     private:
     int overlapOffset ;

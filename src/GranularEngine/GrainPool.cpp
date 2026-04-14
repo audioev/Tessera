@@ -9,7 +9,7 @@ GrainPool::GrainPool()
 
 }
 
-GrainPool::~GrainPool(){}
+GrainPool::~GrainPool() = default;
 
 void GrainPool::prepare()
 {

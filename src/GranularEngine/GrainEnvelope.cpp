@@ -12,12 +12,12 @@ GrainEnvelope::GrainEnvelope()
 
 }
 
-GrainEnvelope::~GrainEnvelope(){}
+GrainEnvelope::~GrainEnvelope() = default;
 
 void GrainEnvelope::configure(EnvelopeType type,int totalSamples)
 {
     this->type= type;
-    this->totalSamples;
+    this->totalSamples = totalSamples;
 }
 
 float GrainEnvelope::calculate(float phase)
