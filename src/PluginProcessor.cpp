@@ -217,6 +217,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("postGain",1),"Post Gain",juce::NormalisableRange<float>(-24.f,6.f,0.1f),0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("dryWet", 1), "Mix", juce::NormalisableRange<float>(0.f,1.0f,0.01f),0.9f));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("envelopeType",1),"Envelope Type", juce::StringArray {"Gaussian", "Hann", "Trapezoid"},1));
     return layout;
 }
 
@@ -227,11 +228,8 @@ GranularSettings AudioPluginAudioProcessor::getGranularSettings(juce::AudioProce
     settings.grainDensity = static_cast<int>(apvts.getRawParameterValue("grainDensity")->load());
     settings.grainDuration = apvts.getRawParameterValue("grainDuration")->load();
     settings.playbackRate = apvts.getRawParameterValue("playBackSpeed")->load();
-    settings.type = EnvelopeType::Hann;
-    settings.globalAttack = apvts.getRawParameterValue("globalAttack")->load();
-    settings.globalDecay = apvts.getRawParameterValue("globalDecay")->load();
-    settings.globalRelease = apvts.getRawParameterValue("globalRelease")->load();
-    settings.globalSustain = apvts.getRawParameterValue("globalSustain")->load();
+    auto envIndex = static_cast<int>(apvts.getRawParameterValue("envelopeType")->load());
+    settings.type =static_cast<EnvelopeType>(envIndex);
     settings.bypass = static_cast<bool>(apvts.getRawParameterValue("bypass")->load());
     settings.randomness = apvts.getRawParameterValue("randomness")->load();
     settings.postGain = apvts.getRawParameterValue("postGain")->load();

@@ -28,20 +28,8 @@ void Engine::prepare(const double sampleRate, const int samplesPerBlock,const in
     circularBuffer.prepare(numChannels,static_cast<int>(bufSize));
     grainPool.prepare();
     scheduler.prepare(sampleRate, samplesPerBlock,1,bufSize);
-    // may need to be changed
-    adsr.noteOn();
 }
 
-void Engine::configureAdsr(GranularSettings& settings)
-{
-    juce::ADSR::Parameters adsrParams;
-    adsrParams.attack = settings.globalAttack;
-    adsrParams.decay = settings.globalDecay;
-    adsrParams.sustain = settings.globalSustain;
-    adsrParams.release = settings.globalRelease;
-    adsr.setParameters(adsrParams);
-
-}
 
 void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& settings)
 {
@@ -52,7 +40,6 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
     //std::cout << "grain density" << settings.grainDensity << std::endl;
     //----------------------------------------------------------------------
     scheduler.process(settings,grainPool ,circularBuffer.getWriteHead());
-    configureAdsr(settings);
     //dry/wet mix control needs to be blended here
     bufferRef.clear();
     int activeGrains = 0;
@@ -117,7 +104,4 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
     }
     std::cout << "active grains: " << activeGrains << std::endl;
     std::cout << "writehead: " << circularBuffer.getWriteHead() << std::endl;
-    //this applies an ADSR envelope to the current outgoing buffer
-    //which contains the new grain samples
-    adsr.applyEnvelopeToBuffer(bufferRef,0,bufferRef.getNumSamples());
 }

@@ -17,13 +17,11 @@ public:
 
     void prepare(double sampleRate, int samplesPerBlock, int numChannels);
     void process(juce::AudioBuffer<float>& bufferRef, GranularSettings& settings);
-    void configureAdsr(GranularSettings& settings);
 
 private:
     CircularBuffer circularBuffer;
     GrainPool grainPool;
     Scheduler scheduler;
-    juce::ADSR adsr;
     double sampleRate;
     int samplesPerBlock;
     int numChannels;

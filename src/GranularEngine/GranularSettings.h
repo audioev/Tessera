@@ -16,10 +16,6 @@ struct GranularSettings
     float grainDuration{0.05f};
     float playbackRate{1.f};
     float randomness{0.f};
-    float globalAttack{0.01f};
-    float globalDecay{0.01f};
-    float globalSustain{0.1f};
-    float globalRelease{0.1f};
     float postGain{0.5f};
     float dryWet{0.9f};
 

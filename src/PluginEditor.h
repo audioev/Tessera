@@ -27,6 +27,9 @@ struct CustomLookAndFeel : juce::LookAndFeel_V4
                             float maxSliderPos,
                             juce::Slider::SliderStyle style,
                             juce::Slider& slider) override;
+    void drawDrawableButton(juce::Graphics&, juce::DrawableButton&,
+                            bool shouldDrawButtonAsHighlighted,
+                            bool shouldDrawButtonAsDown) override;
 };
 
 //=============================================================================
@@ -102,6 +105,52 @@ private:
 };
 //==============================================================================
 
+struct XYPadController : juce::Component
+{
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseEnter(const juce::MouseEvent& event) override;
+};
+
+//==============================================================================
+
+struct EnvelopeSelectorComponent : juce::Component,
+                                    juce::Button::Listener
+{
+    EnvelopeSelectorComponent(juce::AudioProcessorValueTreeState& apvts) :
+    apvts(apvts)
+    {
+        for (auto* btn : {&gaussianDrawableButton, &hannDrawableButton ,&trapezoidDrawableButton })
+        {
+            btn->setRadioGroupId(1);
+            btn->setClickingTogglesState(true);
+            btn->addListener(this);
+            addAndMakeVisible(btn);
+        }
+        setLookAndFeel(&lnf);
+    }
+    ~EnvelopeSelectorComponent()
+    {
+        setLookAndFeel(nullptr);
+    }
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void buttonClicked(juce::Button* button) override;
+
+private:
+    juce::DrawableButton gaussianDrawableButton{"Gaussian",juce::DrawableButton::ImageRaw};
+    juce::DrawableButton hannDrawableButton{"Hann",juce::DrawableButton::ImageRaw};
+    juce::DrawableButton trapezoidDrawableButton{"Trapezoid",juce::DrawableButton::ImageRaw};
+    CustomLookAndFeel lnf;
+    //EnvelopeType& type;
+    juce::AudioProcessorValueTreeState& apvts;
+};
+
+//==============================================================================
+
 struct WaveFormComponent : juce::Component,
                             juce::Timer
 {
@@ -145,10 +194,6 @@ private:
     RotarySliderWithLabels grainDensitySlider,
     grainDurationSlider,
     playBackSpeedSlider,
-    globalAttackSlider,
-    globalDecaySlider,
-    globalSustainSlider,
-    globalReleaseSlider,
     randomnessSlider,
     dryWetSlider;
 
@@ -161,18 +206,16 @@ private:
 
     WaveFormComponent waveFormComponent;
 
+    EnvelopeSelectorComponent envelopeSelector;
+
     Attachment grainDensitySliderAttachment,
     grainDurationSliderAttachment,
     playBackSpeedSliderAttachment,
-    globalAttackSliderAttachment,
-    globalDecaySliderAttachment,
-    globalSustainSliderAttachment,
-    globalReleaseSliderAttachment,
     randomnessSliderAttachment,
     postGainSliderAttachment,
     dryWetSliderAttachment;
 
-    juce::Rectangle<int> grainEnvBox, globalEnvBox, waveFormBox, gainBox;
+    juce::Rectangle<int> grainEnvBox, waveFormBox, gainBox;
     juce::TextButton powerButton;
     juce::ButtonParameterAttachment powerButtonAttachment;
 
