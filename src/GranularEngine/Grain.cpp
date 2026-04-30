@@ -37,7 +37,7 @@ void Grain::configure( int startSample, float pitch, float amplitude,int totalSa
     this->amplitude = amplitude;
     this->pitch = pitch;
     this->totalSamples = totalSamples;
-    std::cout <<  "grain configured with total samples "<<totalSamples << std::endl;
+    //std::cout <<  "grain configured with total samples "<<totalSamples << std::endl;
     envelope.configure(type,totalSamples);
     setActive(true);
 }
@@ -54,8 +54,8 @@ float Grain::getNextSample(const float* sample)
 
 bool Grain::isFinished()
 {
-    std::cout << "currentSample: " << currentSample
-          << " totalSamples: " << totalSamples << std::endl;
+    // std::cout << "currentSample: " << currentSample
+    //       << " totalSamples: " << totalSamples << std::endl;
     if (totalSamples == 0) return true;
     if (currentSample >= totalSamples)
     {

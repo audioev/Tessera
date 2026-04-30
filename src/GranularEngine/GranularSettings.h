@@ -14,7 +14,8 @@ struct GranularSettings
 
     int grainDensity{8};
     float grainDuration{0.05f};
-    float playbackRate{1.f};
+    float playbackSpeed{1.f};
+    float pitch{1.f};
     float randomness{0.f};
     float postGain{0.5f};
     float dryWet{0.9f};

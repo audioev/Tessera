@@ -6,7 +6,7 @@
 
 enum class EnvelopeType
 {
-    Gaussian,
-    Hann,
-    Trapezoid,
+    Gaussian = 0,
+    Hann = 1,
+    Trapezoid = 2,
 };

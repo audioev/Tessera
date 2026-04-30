@@ -61,7 +61,7 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
             const float* readPntr = circularBuffer.read(0,grain.getStartSample(),grain.getCurrentSample());
             if (samples == 0)
             {
-                std::cout<<"Read Pointer Value:"<<*readPntr<<std::endl;
+                //std::cout<<"Read Pointer Value:"<<*readPntr<<std::endl;
             }
             //----------------------------------------------------------------------
             // std::cout << "startsample"<<grain.getStartSample() << std::endl;
@@ -102,6 +102,6 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
             grainPool.returnGrain(&grain);
         }
     }
-    std::cout << "active grains: " << activeGrains << std::endl;
-    std::cout << "writehead: " << circularBuffer.getWriteHead() << std::endl;
+    // std::cout << "active grains: " << activeGrains << std::endl;
+    // std::cout << "writehead: " << circularBuffer.getWriteHead() << std::endl;
 }
