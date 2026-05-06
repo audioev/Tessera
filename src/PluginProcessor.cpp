@@ -195,6 +195,8 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
     juce::ignoreUnused (data, sizeInBytes);
 }
 
+
+
 juce::AudioProcessorValueTreeState::ParameterLayout
     AudioPluginAudioProcessor::createParameterLayout()
 {
@@ -204,13 +206,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(0.002f,100.f,0.01f,0.5f),0.05f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.5f,2.f,0.01f),1.f));
-
-    //global-output envelope
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalAttack",1),"Global Attack",juce::NormalisableRange<float>(0.1f,100.f,0.1f,0.03f),0.5f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalDecay",1),"Global Decay",juce::NormalisableRange<float>(0.01f,10.f,0.01f,0.03f),0.1f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalSustain",1),"Global Sustain",juce::NormalisableRange<float>(0.1f,100.f,0.01f),0.2f));
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("globalRelease",1),"Global Release",juce::NormalisableRange<float>(0.01f,100.f,0.001f,0.03f),0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.0f,1.f,0.01f),0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pitch",1),"Pitch",juce::NormalisableRange<float>(0.5f,2.f,0.01f),1.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("randomness",1),"Randomness",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.f));
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("bypass",1),"Bypass",false));
@@ -218,7 +215,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("postGain",1),"Post Gain",juce::NormalisableRange<float>(-24.f,6.f,0.1f),0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("dryWet", 1), "Mix", juce::NormalisableRange<float>(0.f,1.0f,0.01f),0.9f));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("envelopeType",1),"Envelope Type", juce::StringArray {"Gaussian", "Hann", "Trapezoid"},1));
+
     return layout;
+}
+
+void AudioPluginAudioProcessor::setPlaybackSpeed(float valX) const
+{
+    //std::cout<<"setPlaybackSpeed"<<valX<<std::endl;
+    auto clamped = juce::jlimit(0.f,0.9999f,valX);
+    if (auto* param = apvts.getParameter("playBackSpeed"))
+        param->setValueNotifyingHost(clamped);
+}
+
+void AudioPluginAudioProcessor::setPitch(float valY) const
+{
+    //std::cout<<"setPitch"<<valY<<std::endl;
+    auto clamped = juce::jlimit(0.f,0.9999f,valY);
+    std::cout<< "clamped: " << clamped << std::endl;
+    if (auto* param = apvts.getParameter("pitch"))
+        param->setValueNotifyingHost(clamped);
 }
 
 GranularSettings AudioPluginAudioProcessor::getGranularSettings(juce::AudioProcessorValueTreeState& apvts)
@@ -227,7 +242,8 @@ GranularSettings AudioPluginAudioProcessor::getGranularSettings(juce::AudioProce
 
     settings.grainDensity = static_cast<int>(apvts.getRawParameterValue("grainDensity")->load());
     settings.grainDuration = apvts.getRawParameterValue("grainDuration")->load();
-    settings.playbackRate = apvts.getRawParameterValue("playBackSpeed")->load();
+    settings.pitch = apvts.getRawParameterValue("pitch")->load();
+    settings.playbackSpeed = apvts.getRawParameterValue("playBackSpeed")->load();
     auto envIndex = static_cast<int>(apvts.getRawParameterValue("envelopeType")->load());
     settings.type =static_cast<EnvelopeType>(envIndex);
     settings.bypass = static_cast<bool>(apvts.getRawParameterValue("bypass")->load());

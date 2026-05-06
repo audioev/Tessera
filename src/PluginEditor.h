@@ -107,11 +107,20 @@ private:
 
 struct XYPadController : juce::Component
 {
+    XYPadController(AudioPluginAudioProcessor&);
+    ~XYPadController();
+
     void paint(juce::Graphics& g) override;
     void resized() override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
-    void mouseEnter(const juce::MouseEvent& event) override;
+
+private:
+    AudioPluginAudioProcessor& processorRef;
+    juce::Point<float> handlePosition {0.5f,0.5f};
+    juce::Rectangle<int> getRenderArea() const;
+    bool isDragging {false};
 };
 
 //==============================================================================
@@ -130,6 +139,7 @@ struct EnvelopeSelectorComponent : juce::Component,
             addAndMakeVisible(btn);
         }
         setLookAndFeel(&lnf);
+        hannDrawableButton.setToggleState(true,juce::dontSendNotification);
     }
     ~EnvelopeSelectorComponent()
     {
@@ -214,6 +224,8 @@ private:
     randomnessSliderAttachment,
     postGainSliderAttachment,
     dryWetSliderAttachment;
+
+    XYPadController xypadController;
 
     juce::Rectangle<int> grainEnvBox, waveFormBox, gainBox;
     juce::TextButton powerButton;

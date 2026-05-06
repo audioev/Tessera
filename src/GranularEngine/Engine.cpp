@@ -14,7 +14,6 @@ Engine::Engine()
 
 Engine::~Engine()
 {
-    //adsr.noteOff();
 }
 
 
@@ -40,6 +39,8 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
     //std::cout << "grain density" << settings.grainDensity << std::endl;
     //----------------------------------------------------------------------
     scheduler.process(settings,grainPool ,circularBuffer.getWriteHead());
+    std::cout << "pitch: " << settings.pitch << std::endl;
+    std::cout << "playback speed: " << settings.playbackSpeed << std::endl;
     //dry/wet mix control needs to be blended here
     bufferRef.clear();
     int activeGrains = 0;
@@ -59,15 +60,6 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
         {
             //returns a pntr to the current input sample that is begin processed in our current grain
             const float* readPntr = circularBuffer.read(0,grain.getStartSample(),grain.getCurrentSample());
-            if (samples == 0)
-            {
-                //std::cout<<"Read Pointer Value:"<<*readPntr<<std::endl;
-            }
-            //----------------------------------------------------------------------
-            // std::cout << "startsample"<<grain.getStartSample() << std::endl;
-            // std::cout << "currentsample"<<grain.getCurrentSample() << std::endl;
-            // std::cout << "totalSmaples"<<grain.getTotalSamples() << std::endl;
-            //----------------------------------------------------------------------
             //get the float value of the currently processed sample witht he applied envelope
             /*
              * this may be inccorect and need to be altered. why?
@@ -102,6 +94,4 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
             grainPool.returnGrain(&grain);
         }
     }
-    // std::cout << "active grains: " << activeGrains << std::endl;
-    // std::cout << "writehead: " << circularBuffer.getWriteHead() << std::endl;
 }

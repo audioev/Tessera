@@ -303,16 +303,28 @@ void CustomLookAndFeel::drawDrawableButton(juce::Graphics& g, juce::DrawableButt
     {
         envShape.startNewSubPath(bounds.getX(), bounds.getBottom());
         envShape.quadraticTo(bounds.getCentreX(), bounds.getY(),bounds.getRight(), bounds.getBottom());
+        envShape.lineTo(bounds.getX(), bounds.getBottom());
     } else if (name == "Hann")
     {
+        //FIX THIS SHIT
         envShape.startNewSubPath(bounds.getX(), bounds.getBottom());
-        envShape.quadraticTo(bounds.getCentreX()-2.0f, bounds.getY(),bounds.getX()- 2.0f, bounds.getBottom());
+        envShape.cubicTo(bounds.getCentreX() - bounds.getWidth() * 0.3f, bounds.getBottom(),
+    bounds.getCentreX() - bounds.getWidth() * 0.05f, bounds.getY() + 60.f,
+        bounds.getCentreX(), bounds.getY() + 60.f
+        );
+        envShape.cubicTo(
+            bounds.getCentreX() + bounds.getWidth() * 0.05f, bounds.getY() + 60.f,
+            bounds.getCentreX() + bounds.getWidth() * 0.3f, bounds.getBottom(),
+            bounds.getRight(), bounds.getBottom()
+        );
+        envShape.lineTo(bounds.getX(), bounds.getBottom());
     } else if (name == "Trapezoid")
     {
         envShape.startNewSubPath(bounds.getX(), bounds.getBottom());
-        envShape.lineTo(bounds.getX()+ bounds.getWidth() * 2.0f, bounds.getY());
-        envShape.lineTo(bounds.getX() + bounds.getWidth() * 0.8f, bounds.getY());
+        envShape.lineTo(bounds.getX() + bounds.getWidth() * 0.2f, bounds.getY() + 60.f);
+        envShape.lineTo(bounds.getX() + bounds.getWidth() * 0.8f, bounds.getY() + 60.f);
         envShape.lineTo(bounds.getRight(),bounds.getBottom());
+        envShape.closeSubPath();
     }
 
     g.setColour(juce::Colours::white);
@@ -360,7 +372,7 @@ void EnvelopeSelectorComponent::buttonClicked(juce::Button* button)
     }
     if (auto* param = apvts.getParameter("envelopeType"))
     {
-        param->setValue(param->convertTo0to1(static_cast<float>(index)));
+        param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(index)));
     }
 }
 
@@ -472,6 +484,82 @@ void WaveFormComponent:: resized()
 
 //============================================================================================
 
+XYPadController::XYPadController(AudioPluginAudioProcessor& p) : processorRef(p){}
+
+XYPadController::~XYPadController(){}
+
+
+void XYPadController::paint (juce::Graphics& g)
+{
+    g.fillAll(juce::Colours::black);
+    g.setColour(juce::Colours::grey);
+    g.fillRect(getRenderArea());
+
+    auto area = getRenderArea().toFloat();
+
+    float xLine = area.getX() + handlePosition.x * area.getWidth();
+    float yLine = area.getY() + handlePosition.y * area.getHeight();
+
+    g.setColour(juce::Colours::rebeccapurple);
+    g.drawLine(area.getX(), yLine, area.getRight(), yLine, 1.0f);
+    g.drawLine(xLine, area.getY(), xLine, area.getBottom(), 1.0f);
+
+    g.setColour(juce::Colours::black);
+    g.fillEllipse(xLine - 6, yLine - 6, 12,12);
+
+    g.setColour(juce::Colours::white);
+
+    g.drawFittedText("Pitch-Up",0 ,0 ,getWidth(), 18, juce::Justification::centred,1);
+    g.drawFittedText("Pitch-Down", 0, getHeight()-18,getWidth(),18,juce::Justification::centred,1);
+    //draw vertical text for other label
+}
+
+void XYPadController::resized()
+{
+
+}
+
+
+juce::Rectangle<int> XYPadController::getRenderArea() const
+{
+    auto bounds = getLocalBounds();
+    bounds.removeFromTop(18);
+    bounds.removeFromBottom(18);
+    bounds.removeFromLeft(18);
+    bounds.removeFromRight(18);
+    return bounds;
+}
+
+void XYPadController::mouseDrag(const juce::MouseEvent& event)
+{
+    auto area = getRenderArea().toFloat();
+    // std::cout<< "area: " << area.getX() << " " << area.getY() << " " << area.getWidth() << " " << area.getHeight() << std::endl;
+    // std::cout << "event pos: "<< event.position.x << " " << event.position.y << std::endl;
+    float normX = juce::jlimit(0.f,1.0f,(event.position.x - area.getX()) / area.getWidth());
+    float normY = juce::jlimit(0.f,1.0f,(event.position.y - area.getY()) / area.getHeight());
+
+    std::cout<< "normX: " << normX << "NormY: " << normY << std::endl;
+
+    handlePosition = { normX , normY};
+
+    processorRef.setPlaybackSpeed(normX);
+    processorRef.setPitch(normY);
+
+    repaint();
+}
+
+void XYPadController::mouseUp(const juce::MouseEvent& event)
+{
+
+}
+
+void XYPadController::mouseDown(const juce::MouseEvent& event)
+{
+
+}
+
+//============================================================================================
+
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p),envelopeSelector(p.apvts),
 grainDensitySlider(*processorRef.apvts.getParameter("grainDensity"),"Grains"),
@@ -482,6 +570,7 @@ postGainSlider(*processorRef.apvts.getParameter("postGain"),"Db"),
 dryWetSlider(*processorRef.apvts.getParameter("dryWet"), "%"),
 
 waveFormComponent(processorRef),
+xypadController(processorRef),
 
 grainDensitySliderAttachment(processorRef.apvts,"grainDensity",grainDensitySlider),
 grainDurationSliderAttachment(processorRef.apvts,"grainDuration",grainDurationSlider),
@@ -580,10 +669,13 @@ void AudioPluginAudioProcessorEditor::resized()
     waveFormBox = juce::Rectangle(10,70,980,170);
     waveFormComponent.setBounds(waveFormBox);
 
+    auto xyBox = juce::Rectangle(getRight() - 700 ,bottomY ,300,300 );
+    xypadController.setBounds(xyBox);
+
     //granular parameters area
     grainDensitySlider.setBounds(grainParamX , bottomY + 20, knobLargeSize, knobLargeSize);
     grainDurationSlider.setBounds(grainParamX, bottomY + 140, knobSmallSize, knobSmallSize);
-    playBackSpeedSlider.setBounds(grainParamX + knobSmallSize + 10 , bottomY + 140, knobSmallSize, knobSmallSize);
+    //playBackSpeedSlider.setBounds(grainParamX + knobSmallSize + 10 , bottomY + 140, knobSmallSize, knobSmallSize);
     randomnessSlider.setBounds(grainParamX + knobSmallSize + 10,bottomY + 20,knobSmallSize,knobSmallSize);
 
     //global envelope area
@@ -592,16 +684,10 @@ void AudioPluginAudioProcessorEditor::resized()
     int selectorY = getHeight() - selectorSize -50;
     envelopeSelector.setBounds(selectorX, selectorY, selectorSize, selectorSize-50);
 
-    int globalEnvW = 260;
-    int globalEnvH = 200;
     int globalKnobSize = 90;
-    int globalPadX = (globalEnvW - globalKnobSize * 2) / 3;
-    int globalPadY = (globalEnvH - globalKnobSize * 2) / 3;
-    //we can use these dimensions for the buttons
 
-    dryWetSlider.setBounds(450,bottomY,globalKnobSize,globalKnobSize);
-    postGainSlider.setBounds(350,bottomY,60,220);
-
+    dryWetSlider.setBounds(750,bottomY,globalKnobSize,globalKnobSize);
+    postGainSlider.setBounds(650,bottomY,60,220);
 }
 
 std::vector<juce::Component*> AudioPluginAudioProcessorEditor::getComps()
@@ -615,5 +701,6 @@ std::vector<juce::Component*> AudioPluginAudioProcessorEditor::getComps()
         &postGainSlider,
         &dryWetSlider,
         &envelopeSelector,
+        &xypadController,
     };
 }

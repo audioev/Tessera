@@ -155,6 +155,9 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
+    void setPlaybackSpeed(float normValue)const;
+    void setPitch(float normValue)const;
+
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
@@ -192,6 +195,7 @@ public:
     GranularSettings getGranularSettings(juce::AudioProcessorValueTreeState& apvts);
 
     juce::dsp::DryWetMixer<float> dryWetMixer { 0 };
+
 
 private:
     Engine granularEngine;
