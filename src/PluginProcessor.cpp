@@ -221,19 +221,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 
 void AudioPluginAudioProcessor::setPlaybackSpeed(float valX) const
 {
-    //std::cout<<"setPlaybackSpeed"<<valX<<std::endl;
-    auto clamped = juce::jlimit(0.f,0.9999f,valX);
     if (auto* param = apvts.getParameter("playBackSpeed"))
-        param->setValueNotifyingHost(clamped);
+        param->setValueNotifyingHost(valX);
 }
 
 void AudioPluginAudioProcessor::setPitch(float valY) const
 {
-    //std::cout<<"setPitch"<<valY<<std::endl;
-    auto clamped = juce::jlimit(0.f,0.9999f,valY);
-    std::cout<< "clamped: " << clamped << std::endl;
     if (auto* param = apvts.getParameter("pitch"))
-        param->setValueNotifyingHost(clamped);
+        param->setValueNotifyingHost(valY);
 }
 
 GranularSettings AudioPluginAudioProcessor::getGranularSettings(juce::AudioProcessorValueTreeState& apvts)

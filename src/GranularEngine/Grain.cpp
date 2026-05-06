@@ -28,7 +28,7 @@ bool Grain::getActive()
     return this->isActive;
 }
 
-void Grain::configure( int startSample, float pitch, float amplitude,int totalSamples ,EnvelopeType type)
+void Grain::configure( int startSample, float pitch, float amplitude,int totalSamples ,float playbackSpeed,EnvelopeType type)
 {
    // this->duration = duration;
     currentSample = 0;
@@ -36,6 +36,7 @@ void Grain::configure( int startSample, float pitch, float amplitude,int totalSa
     this->startSample = startSample;
     this->amplitude = amplitude;
     this->pitch = pitch;
+    this->playbackSpeed = playbackSpeed;
     this->totalSamples = totalSamples;
     //std::cout <<  "grain configured with total samples "<<totalSamples << std::endl;
     envelope.configure(type,totalSamples);
@@ -44,11 +45,11 @@ void Grain::configure( int startSample, float pitch, float amplitude,int totalSa
 
 float Grain::getNextSample(const float* sample)
 {
-    float const phase = static_cast<float>(currentSample) / static_cast<float>(totalSamples);
+    float const phase = currentSample / static_cast<float>(totalSamples);
     float rawSample = *sample;
     // std::cout<< "rawSample"<< rawSample<<std::endl;
     rawSample = rawSample * envelope.calculate(phase) * amplitude;
-    currentSample++;
+    currentSample += pitch;
     return rawSample;
 }
 
@@ -56,7 +57,7 @@ bool Grain::isFinished()
 {
     // std::cout << "currentSample: " << currentSample
     //       << " totalSamples: " << totalSamples << std::endl;
-    if (totalSamples == 0) return true;
+    if (totalSamples == 0.f) return true;
     if (currentSample >= totalSamples)
     {
         return true;
@@ -64,12 +65,3 @@ bool Grain::isFinished()
     return false;
 }
 
-void Grain::reset()
-{
-    startSample = 0;
-    duration = 0;
-    currentSample = 0;
-    pitch = 0;
-    amplitude = 0.f;
-    isActive = false;
-}

@@ -14,7 +14,7 @@ public:
     Grain();
     ~Grain();
 
-    void configure( int currentSample, float pitch, float amplitude,int totalSamples ,EnvelopeType type);
+    void configure( int currentSample, float pitch, float amplitude,int totalSamples ,float playbackSpeed,EnvelopeType type);
     void setActive(bool status);
     bool getActive();
     float getNextSample( const float *sample);
@@ -22,16 +22,16 @@ public:
     int getStartSample(){return startSample;}
     int getTotalSamples(){return totalSamples;}
     bool isFinished();
-    void reset();
 
 private:
     int duration;
     int startSample;
-    int currentSample;
-    int pitch;
+    float currentSample;
+    float pitch;
+    float playbackSpeed;
     float amplitude;
     bool isActive;
-    int totalSamples;
+    float totalSamples;
 
     GrainEnvelope envelope;
 };

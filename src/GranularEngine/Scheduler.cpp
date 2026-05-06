@@ -30,21 +30,17 @@ void Scheduler::process(const GranularSettings& settings,GrainPool& grainPool,in
     //interonset in samples
     interOnset = static_cast<int>(sampleRate / settings.grainDensity);
     nextOnset += samplesPerBlock;
-    std::cout<< "pitch: "<< settings.pitch << std::endl;
-    std::cout << "speed: "<< settings.playbackSpeed << std::endl;
+    // i beleive this is where the speed & picth goes
     if (nextOnset >= interOnset)
     {
         Grain* grain = grainPool.getInactiveGrain();
-        //std::cout << "grain pntr: "<< grain << std::endl;
         if (grain != nullptr)
         {
             randomOffset = (random.nextFloat() * 2.0f - 1.0f) * settings.randomness * maxSprayInSamples;
             sprayedStartSamples  =((bufferWriteHead + static_cast<int>(randomOffset)) + bufSize)%bufSize;
-            float clampedDuration = std::max(settings.grainDuration, minGrainDuration);
-            int totalSamples = static_cast<int>(clampedDuration * sampleRate);
-            //std::cout << "Envleope type: " << static_cast<int>(settings.type) << std::endl;
-            grain->configure(sprayedStartSamples,settings.playbackSpeed , 1 ,
-                static_cast<int>(settings.grainDuration * sampleRate), settings.type);
+            //float clampedDuration = std::max(settings.grainDuration, minGrainDuration);
+            grain->configure(sprayedStartSamples,settings.pitch , 1 ,
+                static_cast<int>(settings.grainDuration * sampleRate),settings.playbackSpeed, settings.type);
 
             nextOnset = 0;
         }

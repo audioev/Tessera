@@ -533,15 +533,11 @@ juce::Rectangle<int> XYPadController::getRenderArea() const
 void XYPadController::mouseDrag(const juce::MouseEvent& event)
 {
     auto area = getRenderArea().toFloat();
-    // std::cout<< "area: " << area.getX() << " " << area.getY() << " " << area.getWidth() << " " << area.getHeight() << std::endl;
-    // std::cout << "event pos: "<< event.position.x << " " << event.position.y << std::endl;
     float normX = juce::jlimit(0.f,1.0f,(event.position.x - area.getX()) / area.getWidth());
     float normY = juce::jlimit(0.f,1.0f,(event.position.y - area.getY()) / area.getHeight());
 
-    std::cout<< "normX: " << normX << "NormY: " << normY << std::endl;
-
     handlePosition = { normX , normY};
-
+    normY = 1.0f - normY;
     processorRef.setPlaybackSpeed(normX);
     processorRef.setPitch(normY);
 

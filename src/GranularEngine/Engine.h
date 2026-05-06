@@ -25,7 +25,6 @@ private:
     double sampleRate;
     int samplesPerBlock;
     int numChannels;
-
 };
 
 

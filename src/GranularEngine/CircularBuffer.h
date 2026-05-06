@@ -33,7 +33,7 @@ class CircularBuffer
         }
     }
 
-    const float* read(int channel, int startSample, int currentSample)
+    const float* read(const int channel, const int startSample, const int currentSample)
     {
         return buffer.getReadPointer(channel, (startSample + currentSample) % buffer.getNumSamples());
     }

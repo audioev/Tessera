@@ -59,6 +59,7 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
         for (auto samples = 0 ; samples < samplesPerBlock; samples++)
         {
             //returns a pntr to the current input sample that is begin processed in our current grain
+
             const float* readPntr = circularBuffer.read(0,grain.getStartSample(),grain.getCurrentSample());
             //get the float value of the currently processed sample witht he applied envelope
             /*
