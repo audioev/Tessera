@@ -39,6 +39,7 @@ class CircularBuffer
     }
 
     int getWriteHead(){return writeHead;}
+    int getBufSize() const {return buffer.getNumSamples();}
 
     private:
     int writeHead = 0;

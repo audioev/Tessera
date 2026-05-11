@@ -10,7 +10,7 @@ Grain::Grain()
 {
     startSample = 0;
     currentSample = 0;
-    pitch = 0;
+    pitch = 1.0f;
     amplitude = 0.f;
     isActive = false;
     totalSamples = 0;
@@ -28,37 +28,42 @@ bool Grain::getActive()
     return this->isActive;
 }
 
-void Grain::configure( int startSample, float pitch, float amplitude,int totalSamples ,float playbackSpeed,EnvelopeType type)
+void Grain::configure( int startSample, float pitch, float amplitude,float totalSamples ,float playbackSpeed,EnvelopeType type)
 {
    // this->duration = duration;
     currentSample = 0;
+    readPosition = 0.f;
     //not bounded
     this->startSample = startSample;
     this->amplitude = amplitude;
     this->pitch = pitch;
     this->playbackSpeed = playbackSpeed;
     this->totalSamples = totalSamples;
-    //std::cout <<  "grain configured with total samples "<<totalSamples << std::endl;
     envelope.configure(type,totalSamples);
     setActive(true);
+    std::cout << "totalSamples: " << totalSamples
+          << " readPosition: " << readPosition << std::endl;
 }
 
-float Grain::getNextSample(const float* sample)
+float Grain::getNextSample(const float* sampleA , const float* sampleB)
 {
-    float const phase = currentSample / static_cast<float>(totalSamples);
-    float rawSample = *sample;
-    // std::cout<< "rawSample"<< rawSample<<std::endl;
-    rawSample = rawSample * envelope.calculate(phase) * amplitude;
-    currentSample += pitch;
-    return rawSample;
+
+    float frac = readPosition - static_cast<float>(static_cast<int>(readPosition));
+    float interp = *sampleA + frac *(*sampleB - *sampleA);
+    float const phase = juce::jlimit(0.f,1.f,readPosition / totalSamples);
+
+    float result = interp * envelope.calculate(phase) * amplitude;
+
+    readPosition += pitch;
+    return result;
 }
 
 bool Grain::isFinished()
 {
-    // std::cout << "currentSample: " << currentSample
-    //       << " totalSamples: " << totalSamples << std::endl;
+    std::cout << "readPosition: " << readPosition
+              << " totalSamples: " << totalSamples << std::endl;
     if (totalSamples == 0.f) return true;
-    if (currentSample >= totalSamples)
+    if (readPosition >= totalSamples)
     {
         return true;
     }

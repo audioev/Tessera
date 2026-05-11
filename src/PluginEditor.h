@@ -113,12 +113,13 @@ struct XYPadController : juce::Component
     void paint(juce::Graphics& g) override;
     void resized() override;
     void mouseDrag(const juce::MouseEvent& event) override;
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDoubleClick(const juce::MouseEvent& event) override;
 
 private:
+    float initX{0.5f};
+    float initY{0.5f};
     AudioPluginAudioProcessor& processorRef;
-    juce::Point<float> handlePosition {0.5f,0.5f};
+    juce::Point<float> handlePosition {initX,initY};
     juce::Rectangle<int> getRenderArea() const;
     bool isDragging {false};
 };

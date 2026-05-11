@@ -13,7 +13,15 @@ GrainPool::~GrainPool() = default;
 
 void GrainPool::prepare()
 {
-    for (Grain grain : grains)
+    for (auto& grain : grains)
+    {
+        grain.setActive(false);
+    }
+}
+
+void GrainPool::returnAllGrains()
+{
+    for (auto& grain : grains)
     {
         grain.setActive(false);
     }

@@ -10,6 +10,7 @@ Engine::Engine()
     sampleRate = 0.0;
     samplesPerBlock = 0;
     numChannels = 0;
+    previousDuration = 0.0;
 }
 
 Engine::~Engine()
@@ -32,6 +33,11 @@ void Engine::prepare(const double sampleRate, const int samplesPerBlock,const in
 
 void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& settings)
 {
+    // at the top of Engine::process()
+    int activeCount = 0;
+    for (auto& grain : grainPool)
+        if (grain.getActive()) activeCount++;
+    std::cout << "active grains: " << activeCount << std::endl;
     //we write the current samples inside the inout buffer to the circular buffer
     //samplesperblock is the number of samples
     circularBuffer.write(bufferRef);
@@ -39,11 +45,14 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
     //std::cout << "grain density" << settings.grainDensity << std::endl;
     //----------------------------------------------------------------------
     scheduler.process(settings,grainPool ,circularBuffer.getWriteHead());
-    std::cout << "pitch: " << settings.pitch << std::endl;
-    std::cout << "playback speed: " << settings.playbackSpeed << std::endl;
+
+    if (settings.grainDuration != previousDuration)
+    {
+        grainPool.returnAllGrains();
+        previousDuration = settings.grainDuration;
+    }
     //dry/wet mix control needs to be blended here
     bufferRef.clear();
-    int activeGrains = 0;
     //outer loop:
     //traverse each grain in the the pool(256)
     for (auto& grain : grainPool)
@@ -53,25 +62,25 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
         //continue the through to the next grain.
         //if this is removed, we process possibly currently playing grains -> not good
         if (!grain.getActive()) continue;
-        activeGrains++;
         //inner loop 1
         //traverse each sample of type float for the size of the sampleBlock
         for (auto samples = 0 ; samples < samplesPerBlock; samples++)
         {
             //returns a pntr to the current input sample that is begin processed in our current grain
 
-            const float* readPntr = circularBuffer.read(0,grain.getStartSample(),grain.getCurrentSample());
+            //const float* readPntr = circularBuffer.read(0,grain.getStartSample(),grain.getCurrentSample());
             //get the float value of the currently processed sample witht he applied envelope
-            /*
-             * this may be inccorect and need to be altered. why?
-             * if we have a block of samples, say the block that exists within point x and y in the buffer
-             * this is a "grain"
-             * here we are applying the enevlope to each individual sample in the grain
-             * we may want to apply the envelope as a window function to the buffer within points x and y
-             * perhaps
-             */
-            //mono sample write, for stereo must be altered
-            float grainNxtSample = grain.getNextSample(readPntr);
+            if (grain.isFinished())break;
+
+            int indexA = static_cast<int>(grain.getReadPosition());
+            int indexB = indexA + 1;
+
+            const float* sampleA = circularBuffer.read(0,grain.getStartSample(),indexA);
+            const float* sampleB = circularBuffer.read(0,grain.getStartSample(),indexB);
+
+
+            //mono sample read, for stereo must be altered
+            const float grainNxtSample = grain.getNextSample(sampleA, sampleB);
             //----------------------------------------------------------------------
             //std::cout << "in channel loop"<< std::endl;
             //----------------------------------------------------------------------
@@ -86,13 +95,22 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
                 //call addsample to add the new current grain sample to the audio thread buffer
                 //basically replace the old sample with the new
                 bufferRef.addSample(channels,samples,grainNxtSample);
+                //if the grain is finished
+
+            }
+            if (grain.isFinished())
+            {
+                //return it back to the pool as an inactive grain to be reused
+                grainPool.returnGrain(&grain);
             }
         }
-        //if the grain is finished
-        if (grain.isFinished())
+    }
+    for ( int ch = 0; ch< bufferRef.getNumChannels(); ch++ )
+    {
+        auto* data = bufferRef.getWritePointer(ch);
+        for (int s = 0; s < bufferRef.getNumSamples(); s++)
         {
-            //return it back to the pool as an inactive grain to be reused
-            grainPool.returnGrain(&grain);
+            data[s] = juce::jlimit(-1.0f,1.0f,data[s]);
         }
     }
 }

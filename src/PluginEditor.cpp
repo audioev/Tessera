@@ -445,6 +445,7 @@ void WaveFormComponent:: paint (juce::Graphics& g)
     juce::Path waveform;
     for (int p = 0; p < W ; ++p)
     {
+        //i dont know why, but removing these casts break the waveform drawing
         int sampleStart = static_cast<int>(static_cast<float>(p) / W * totalSamplesCollected);
         int sampleEnd = juce::jmax(static_cast<int>(static_cast<float>(p + 1) / W * totalSamplesCollected) , sampleStart + 1);
 
@@ -516,7 +517,7 @@ void XYPadController::paint (juce::Graphics& g)
 
 void XYPadController::resized()
 {
-
+    //reset on double click
 }
 
 
@@ -544,14 +545,13 @@ void XYPadController::mouseDrag(const juce::MouseEvent& event)
     repaint();
 }
 
-void XYPadController::mouseUp(const juce::MouseEvent& event)
+void XYPadController::mouseDoubleClick(const juce::MouseEvent& event)
 {
-
-}
-
-void XYPadController::mouseDown(const juce::MouseEvent& event)
-{
-
+    //need to renorm the values like in mousedrag
+    handlePosition = { initX ,initY  };
+    processorRef.setPlaybackSpeed(initX);
+    processorRef.setPitch(initY);
+    repaint();
 }
 
 //============================================================================================
@@ -691,7 +691,6 @@ std::vector<juce::Component*> AudioPluginAudioProcessorEditor::getComps()
     return {
         &grainDensitySlider,
         &grainDurationSlider,
-        &playBackSpeedSlider,
         &waveFormComponent,
         &randomnessSlider,
         &postGainSlider,

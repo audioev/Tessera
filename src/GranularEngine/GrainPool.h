@@ -16,6 +16,7 @@ class GrainPool
     void returnGrain(Grain* grain);
     auto begin(){return grains.begin();}
     auto end(){return grains.end();}
+    void returnAllGrains();
 
 private:
     std::array<Grain, 256> grains;

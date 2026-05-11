@@ -31,18 +31,19 @@ void Scheduler::process(const GranularSettings& settings,GrainPool& grainPool,in
     interOnset = static_cast<int>(sampleRate / settings.grainDensity);
     nextOnset += samplesPerBlock;
     // i beleive this is where the speed & picth goes
-    if (nextOnset >= interOnset)
+    while (nextOnset >= interOnset)
     {
         Grain* grain = grainPool.getInactiveGrain();
         if (grain != nullptr)
         {
+            int grainDurInSamples = static_cast<int>((settings.grainDuration/1000.f) * sampleRate);
             randomOffset = (random.nextFloat() * 2.0f - 1.0f) * settings.randomness * maxSprayInSamples;
-            sprayedStartSamples  =((bufferWriteHead + static_cast<int>(randomOffset)) + bufSize)%bufSize;
+            sprayedStartSamples  =((bufferWriteHead - grainDurInSamples + static_cast<int>(randomOffset)) + bufSize)%bufSize;
             //float clampedDuration = std::max(settings.grainDuration, minGrainDuration);
             grain->configure(sprayedStartSamples,settings.pitch , 1 ,
-                static_cast<int>(settings.grainDuration * sampleRate),settings.playbackSpeed, settings.type);
+                grainDurInSamples,settings.playbackSpeed , settings.type);
 
-            nextOnset = 0;
+            nextOnset -= interOnset;
         }
     }
 

@@ -206,7 +206,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("grainDuration",1),"Grain Duration",juce::NormalisableRange<float>(0.002f,100.f,0.01f,0.5f),0.05f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.0f,1.f,0.01f),0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("playBackSpeed",1),"PlayBack Speed",juce::NormalisableRange<float>(0.0f,2.f,0.01f),1.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pitch",1),"Pitch",juce::NormalisableRange<float>(0.5f,2.f,0.01f),1.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("randomness",1),"Randomness",juce::NormalisableRange<float>(0.f,1.f,0.01f),0.f));
