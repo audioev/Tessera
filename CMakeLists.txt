@@ -27,14 +27,14 @@ if(APPLE)
 endif()
 
 #linux-specific settings
-#if(UNIX and CMAKE_SYSTEM_NAME STREQUAL "Linux")
-#    find_package(PkgConfig REQUIRED)
-#    pkg_check_modules(PkgConfig REQUIRED)
-#
-#    include_directories(${WEBKITZ_INCLUDE_DIRS})
-#    link_directories(${WEBKITZ_LIBRARY_DIRS})
-#    add_definitions(${WEBKITZ_CFLAGS_OTHER})
-#endif()
+if(UNIX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PkgConfig REQUIRED)
+
+    include_directories(${WEBKIT2_INCLUDE_DIRS})
+    link_directories(${WEBKIT2_LIBRARY_DIRS})
+    add_definitions(${WEBKIT2_CFLAGS_OTHER})
+endif()
 
 
 
@@ -45,9 +45,9 @@ add_definitions(-w)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/modules/cmake-include/sudara-cmake")
 
 #windows-specific settings
-#if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-#    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG;Debug>:Debug>" CACHE INTERNAL "")
-#endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
+endif()
 
 juce_add_plugin("${PROJECT_NAME}"
      COMPANY_NAME "${COMPANY_NAME}"                        # Specify the name of the plugin's author
