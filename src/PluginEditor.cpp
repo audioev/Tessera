@@ -380,6 +380,7 @@ void EnvelopeSelectorComponent::buttonClicked(juce::Button* button)
 
 WaveFormComponent::WaveFormComponent(AudioPluginAudioProcessor& p ) : processorRef(p)
 {
+
         startTimerHz(30);
 }
 
@@ -487,7 +488,7 @@ void WaveFormComponent:: resized()
 
 XYPadController::XYPadController(AudioPluginAudioProcessor& p) : processorRef(p){}
 
-XYPadController::~XYPadController(){}
+XYPadController::~XYPadController() = default;
 
 
 void XYPadController::paint (juce::Graphics& g)
@@ -517,7 +518,7 @@ void XYPadController::paint (juce::Graphics& g)
 
 void XYPadController::resized()
 {
-    //reset on double click
+    //dont need this
 }
 
 
@@ -548,9 +549,11 @@ void XYPadController::mouseDrag(const juce::MouseEvent& event)
 void XYPadController::mouseDoubleClick(const juce::MouseEvent& event)
 {
     //need to renorm the values like in mousedrag
-    handlePosition = { initX ,initY  };
+    handlePosition = { initX,initY};
+
     processorRef.setPlaybackSpeed(initX);
     processorRef.setPitch(initY);
+
     repaint();
 }
 
@@ -620,9 +623,7 @@ dryWetSliderAttachment(processorRef.apvts,"dryWet",dryWetSlider)
     setSize (1000, 600);
 }
 
-AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
-{
-}
+AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()=default;
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)

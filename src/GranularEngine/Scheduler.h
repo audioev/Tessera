@@ -29,6 +29,7 @@ public:
     int sprayedStartSamples;
     int bufSize;
     float minGrainDuration;
+    float playbackOffset;
 };
 
 

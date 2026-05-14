@@ -11,12 +11,12 @@ class GrainEnvelope
     GrainEnvelope();
     ~GrainEnvelope();
 
-    void configure(EnvelopeType env,int totalSamples);
+    void configure(EnvelopeType env,float totalSamples);
     float calculate(float phase);
 
 private:
     EnvelopeType type;
-    int totalSamples;
+    float totalSamples;
     int currentSample;
 
     float getHannEnvelope(float samplePhase);

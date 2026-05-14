@@ -15,7 +15,7 @@ class CircularBuffer
 
     ~CircularBuffer() = default;
 
-    void prepare(int numChannels, int numSamples)
+    void prepare(int const numChannels, int const numSamples)
     {
         buffer.setSize(numChannels,numSamples);
         buffer.clear();
@@ -33,13 +33,13 @@ class CircularBuffer
         }
     }
 
-    const float* read(const int channel, const int startSample, const int currentSample)
+    [[nodiscard]] const float* read(const int channel, const int startSample, const int currentSample) const
     {
         return buffer.getReadPointer(channel, (startSample + currentSample) % buffer.getNumSamples());
     }
 
-    int getWriteHead(){return writeHead;}
-    int getBufSize() const {return buffer.getNumSamples();}
+    [[nodiscard]] int getWriteHead() const {return writeHead;}
+    [[nodiscard]] int getBufSize() const {return buffer.getNumSamples();}
 
     private:
     int writeHead = 0;

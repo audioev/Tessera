@@ -14,18 +14,14 @@ public:
     Grain();
     ~Grain();
 
-    void configure( int currentSample, float pitch, float amplitude,float totalSamples ,float playbackSpeed,EnvelopeType type);
+    void configure( int currentSample, float pitch, float amplitude,float totalSamples,EnvelopeType type);
     void setActive(bool status);
-    bool getActive();
+    [[nodiscard]] bool getActive() const;
     float getNextSample( const float* sampleA, const float* sampleB);
-    int getCurrentSample()
-    {
-        return currentSample;
-    }
-    int getStartSample(){return startSample;}
-    int getTotalSamples(){return totalSamples;}
-    float getReadPosition(){return readPosition;}
-    bool isFinished ();
+
+    [[nodiscard]] int getStartSample() const{return startSample;}
+    [[nodiscard]] float getReadPosition() const {return readPosition;}
+    [[nodiscard]] bool isFinished () const;
 
 private:
     int duration;

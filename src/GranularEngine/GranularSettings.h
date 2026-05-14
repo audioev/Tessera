@@ -12,7 +12,7 @@ struct GranularSettings
     bool bypass {false};
 
     int grainDensity{8};
-    float grainDuration{0.05f};
+    float grainDuration{10.f};
     float playbackSpeed{0.5f};
     float pitch{1.f};
     float randomness{0.f};

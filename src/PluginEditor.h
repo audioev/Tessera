@@ -44,7 +44,7 @@ struct VerticalSliderWithLabels : juce::Slider
         setLookAndFeel(&lnf);
     }
 
-    ~VerticalSliderWithLabels()
+    ~VerticalSliderWithLabels() override
     {
         setLookAndFeel(nullptr);
     }
@@ -80,7 +80,7 @@ struct RotarySliderWithLabels : juce::Slider
         setLookAndFeel(&lnf);
     }
 
-    ~RotarySliderWithLabels()
+    ~RotarySliderWithLabels() override
     {
         setLookAndFeel(nullptr);
     }
@@ -108,7 +108,7 @@ private:
 struct XYPadController : juce::Component
 {
     XYPadController(AudioPluginAudioProcessor&);
-    ~XYPadController();
+    ~XYPadController() override;
 
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -116,8 +116,8 @@ struct XYPadController : juce::Component
     void mouseDoubleClick(const juce::MouseEvent& event) override;
 
 private:
-    float initX{0.5f};
-    float initY{0.5f};
+    float initX = {0.4286f};
+    float initY = {0.333f};
     AudioPluginAudioProcessor& processorRef;
     juce::Point<float> handlePosition {initX,initY};
     juce::Rectangle<int> getRenderArea() const;
@@ -142,7 +142,7 @@ struct EnvelopeSelectorComponent : juce::Component,
         setLookAndFeel(&lnf);
         hannDrawableButton.setToggleState(true,juce::dontSendNotification);
     }
-    ~EnvelopeSelectorComponent()
+    ~EnvelopeSelectorComponent() override
     {
         setLookAndFeel(nullptr);
     }
@@ -166,7 +166,7 @@ struct WaveFormComponent : juce::Component,
                             juce::Timer
 {
     WaveFormComponent(AudioPluginAudioProcessor&);
-    ~WaveFormComponent();
+    ~WaveFormComponent() override;
 
     void timerCallback() override;
 

@@ -14,6 +14,9 @@ Grain::Grain()
     amplitude = 0.f;
     isActive = false;
     totalSamples = 0;
+    duration = 0.f;
+    playbackSpeed = 0.f;
+    readPosition = 0.f;
 }
 
 Grain::~Grain() = default;
@@ -23,12 +26,12 @@ void Grain::setActive(bool status)
     this->isActive = status;
 }
 
-bool Grain::getActive()
+bool Grain::getActive() const
 {
     return this->isActive;
 }
 
-void Grain::configure( int startSample, float pitch, float amplitude,float totalSamples ,float playbackSpeed,EnvelopeType type)
+void Grain::configure( int startSample, float pitch, float amplitude,float totalSamples,EnvelopeType type)
 {
    // this->duration = duration;
     currentSample = 0;
@@ -41,27 +44,23 @@ void Grain::configure( int startSample, float pitch, float amplitude,float total
     this->totalSamples = totalSamples;
     envelope.configure(type,totalSamples);
     setActive(true);
-    std::cout << "totalSamples: " << totalSamples
-          << " readPosition: " << readPosition << std::endl;
 }
 
 float Grain::getNextSample(const float* sampleA , const float* sampleB)
 {
 
-    float frac = readPosition - static_cast<float>(static_cast<int>(readPosition));
-    float interp = *sampleA + frac *(*sampleB - *sampleA);
+    float const frac = readPosition - static_cast<float>(static_cast<int>(readPosition));
+    float const interp = *sampleA + frac *(*sampleB - *sampleA);
     float const phase = juce::jlimit(0.f,1.f,readPosition / totalSamples);
 
-    float result = interp * envelope.calculate(phase) * amplitude;
+    float const result = interp * envelope.calculate(phase) * amplitude;
 
     readPosition += pitch;
     return result;
 }
 
-bool Grain::isFinished()
+bool Grain::isFinished() const
 {
-    std::cout << "readPosition: " << readPosition
-              << " totalSamples: " << totalSamples << std::endl;
     if (totalSamples == 0.f) return true;
     if (readPosition >= totalSamples)
     {

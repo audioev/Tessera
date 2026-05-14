@@ -9,12 +9,14 @@
 
 GrainEnvelope::GrainEnvelope()
 {
-
+    type = static_cast<EnvelopeType>(0);
+    totalSamples = 0;
+    currentSample = 0;
 }
 
 GrainEnvelope::~GrainEnvelope() = default;
 
-void GrainEnvelope::configure(EnvelopeType type,int totalSamples)
+void GrainEnvelope::configure(EnvelopeType type,float totalSamples)
 {
     this->type= type;
     this->totalSamples = totalSamples;
@@ -42,15 +44,28 @@ float GrainEnvelope::getHannEnvelope(float samplePhase)
 float GrainEnvelope::getGaussianEnvelope(float samplePhase)
 {
     float GaussianReturnAmplitude;
-    float gWindowWidth = 0.15f;
+    float gWindowWidth = 0.35f;
 
-    GaussianReturnAmplitude = std::exp(-0.5f * (std::exp(samplePhase - 0.5f)/ gWindowWidth));
+    GaussianReturnAmplitude = std::exp(-0.5f * std::pow(samplePhase - 0.5f/ gWindowWidth,2.0f));
     return GaussianReturnAmplitude;
 }
 
 float GrainEnvelope::getTrapezoidEnvelope(float samplePhase)
 {
     float TrapezoidReturnAmplitude;
+    float flat = 0.45f;
+    float taper = (1.0f - flat) /2.0f;
 
-    return samplePhase;
+    if (samplePhase < flat)
+    {
+        TrapezoidReturnAmplitude = samplePhase / taper;
+    }else if ( samplePhase > 1.0f -taper)
+    {
+        TrapezoidReturnAmplitude = (1.0f -samplePhase) /taper;
+    }else
+    {
+        TrapezoidReturnAmplitude = 1.0f;
+    }
+
+    return TrapezoidReturnAmplitude;
 }

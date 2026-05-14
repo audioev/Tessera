@@ -4,10 +4,7 @@
 
 #include "GrainPool.h"
 
-GrainPool::GrainPool()
-{
-
-}
+GrainPool::GrainPool() =default;
 
 GrainPool::~GrainPool() = default;
 
@@ -31,7 +28,6 @@ Grain* GrainPool::getInactiveGrain()
 {
     for (auto& grain : grains)
     {
-        std::cout << "searching for inactive grain "<< std::endl;
         if (grain.getActive() == false)
         {
             return &grain;

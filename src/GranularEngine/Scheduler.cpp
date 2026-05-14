@@ -7,13 +7,18 @@
 Scheduler::Scheduler()
     : nextOnset(0), interOnset(0), sprayedStartSamples(0), maxSprayInSamples(0)
 {
-
+    playbackOffset = 0.f;
+    overlapOffset = 0.f;
+    sampleRate = 0.f;
+    samplesPerBlock = 0.f;
+    bufferWriteHead = 0;
+    randomOffset = 0.f;
+    overlapOffset = 0.f;
+    bufSize = 0;
+    minGrainDuration = 0.f;
 }
 
-Scheduler::~Scheduler()
-{
-
-}
+Scheduler::~Scheduler() = default;
 
 void Scheduler::prepare(const double sampleRate, const int samplesPerBlock, const int overlapOffset, const int bufSize)
 {
@@ -30,23 +35,29 @@ void Scheduler::process(const GranularSettings& settings,GrainPool& grainPool,in
     //interonset in samples
     interOnset = static_cast<int>(sampleRate / settings.grainDensity);
     nextOnset += samplesPerBlock;
-    // i beleive this is where the speed & picth goes
+
     while (nextOnset >= interOnset)
     {
         Grain* grain = grainPool.getInactiveGrain();
         if (grain != nullptr)
         {
             int grainDurInSamples = static_cast<int>((settings.grainDuration/1000.f) * sampleRate);
+
             randomOffset = (random.nextFloat() * 2.0f - 1.0f) * settings.randomness * maxSprayInSamples;
-            sprayedStartSamples  =((bufferWriteHead - grainDurInSamples + static_cast<int>(randomOffset)) + bufSize)%bufSize;
-            //float clampedDuration = std::max(settings.grainDuration, minGrainDuration);
-            grain->configure(sprayedStartSamples,settings.pitch , 1 ,
-                grainDurInSamples,settings.playbackSpeed , settings.type);
 
-            nextOnset -= interOnset;
+            sprayedStartSamples  =((bufferWriteHead - grainDurInSamples + static_cast<int>(randomOffset)-static_cast<int>(playbackOffset))+ bufSize)%bufSize;
+
+            playbackOffset += static_cast<float>(grainDurInSamples) * settings.playbackSpeed - 1.0f;
+            playbackOffset = std::fmod(playbackOffset,static_cast<float>(bufSize));
+
+            grain->configure(sprayedStartSamples,
+                            settings.pitch ,
+                            1 ,
+                            grainDurInSamples,
+                            settings.type);
         }
+        nextOnset -= interOnset;
     }
-
 }
 
 

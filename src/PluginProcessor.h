@@ -192,7 +192,7 @@ public:
 
     SingleChannelSampleFifo<juce::AudioBuffer<float>> leftChannelFifo{ Channel::Left };
 
-    GranularSettings getGranularSettings(juce::AudioProcessorValueTreeState& apvts);
+    static GranularSettings getGranularSettings(juce::AudioProcessorValueTreeState& apvts);
 
     juce::dsp::DryWetMixer<float> dryWetMixer { 0 };
 
