@@ -30,17 +30,9 @@ void Engine::prepare(const double sampleRate, const int samplesPerBlock,const in
 
 void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& settings)
 {
-    for (auto& grain : grainPool)
-
+    // for (auto& grain : grainPool)
     circularBuffer.write(bufferRef);
-
     scheduler.process(settings,grainPool ,circularBuffer.getWriteHead());
-
-    if (settings.grainDuration != previousDuration)
-    {
-        grainPool.returnAllGrains();
-        previousDuration = settings.grainDuration;
-    }
     bufferRef.clear();
 
     for (auto& grain : grainPool)
@@ -71,12 +63,12 @@ void Engine::process(juce::AudioBuffer<float>& bufferRef, GranularSettings& sett
     }
     //this is a limiting module that may not be needed, if your instance generates huge volume explosions, uncomment this
 
-    // for ( int ch = 0; ch< bufferRef.getNumChannels(); ch++ )
-    // {
-    //     auto* data = bufferRef.getWritePointer(ch);
-    //     for (int s = 0; s < bufferRef.getNumSamples(); s++)
-    //     {
-    //         data[s] = juce::jlimit(-1.0f,1.0f,data[s]);
-    //     }
-    // }
+     for ( int ch = 0; ch< bufferRef.getNumChannels(); ch++ )
+     {
+         auto* data = bufferRef.getWritePointer(ch);
+         for (int s = 0; s < bufferRef.getNumSamples(); s++)
+         {
+             data[s] = juce::jlimit(-1.0f,1.0f,data[s]);
+         }
+     }
 }

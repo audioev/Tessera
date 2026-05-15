@@ -48,7 +48,7 @@ void Grain::configure( int startSample, float pitch, float amplitude,float total
 
 float Grain::getNextSample(const float* sampleA , const float* sampleB)
 {
-
+    //
     float const frac = readPosition - static_cast<float>(static_cast<int>(readPosition));
     float const interp = *sampleA + frac *(*sampleB - *sampleA);
     float const phase = juce::jlimit(0.f,1.f,readPosition / totalSamples);
